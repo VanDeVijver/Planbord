@@ -1,0 +1,10 @@
+@page
+@{
+    var code = int.TryParse(Request.Query["code"], out var c) ? c : 404;
+    ViewData["Title"] = code == 404 ? "Pagina niet gevonden" : "Fout " + code;
+}
+<h1>@ViewData["Title"]</h1>
+<p>
+    @(code == 404 ? "Deze pagina bestaat niet (meer)." : "Deze aanvraag kon niet verwerkt worden.")
+    Ga terug naar <a asp-page="/Index">de startpagina</a>.
+</p>

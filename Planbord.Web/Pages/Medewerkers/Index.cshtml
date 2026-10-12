@@ -1,0 +1,59 @@
+@page
+@model Planbord.Web.Pages.Medewerkers.IndexModel
+@{
+    ViewData["Title"] = "Medewerkers";
+}
+<h1 class="h3">Medewerkers</h1>
+<div class="row g-4">
+    <div class="col-lg-8">
+        <div class="table-responsive">
+            <table class="table align-middle">
+                <thead><tr><th scope="col">Naam</th><th scope="col">Telefoon</th><th scope="col">Account</th><th scope="col"><span class="visually-hidden">Acties</span></th></tr></thead>
+                <tbody>
+                    @foreach (var m in Model.Medewerkers)
+                    {
+                        <tr class="@(m.Actief ? "" : "text-muted")">
+                            <td>@m.Naam@if (!m.Actief) { <span class="small"> (inactief)</span> }</td>
+                            <td>@m.Telefoon</td>
+                            <td class="small">@(Model.Accounts.GetValueOrDefault(m.Id) ?? "—")</td>
+                            <td class="text-end text-nowrap">
+                                <details class="d-inline-block text-start">
+                                    <summary class="btn btn-sm btn-outline-secondary">Bewerken</summary>
+                                    <form method="post" class="mt-2 p-2 border rounded bg-white">
+                                        <input type="hidden" name="Form.Id" value="@m.Id" />
+                                        <label class="form-label small" for="n@(m.Id)">Naam</label>
+                                        <input class="form-control form-control-sm mb-1" id="n@(m.Id)" name="Form.Naam" value="@m.Naam" required maxlength="100" />
+                                        <label class="form-label small" for="t@(m.Id)">Telefoon</label>
+                                        <input class="form-control form-control-sm mb-2" id="t@(m.Id)" name="Form.Telefoon" value="@m.Telefoon" maxlength="30" type="tel" />
+                                        <button class="btn btn-sm btn-primary">Opslaan</button>
+                                    </form>
+                                </details>
+                                <form method="post" asp-page-handler="Actief" asp-route-id="@m.Id" class="d-inline">
+                                    <button class="btn btn-sm btn-outline-secondary">@(m.Actief ? "Inactief maken" : "Activeren")</button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <h2 class="h5">Nieuwe medewerker</h2>
+        <form method="post">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <div class="mb-2">
+                <label asp-for="Form.Naam" class="form-label"></label>
+                <input asp-for="Form.Naam" class="form-control" />
+                <span asp-validation-for="Form.Naam" class="text-danger small"></span>
+            </div>
+            <div class="mb-3">
+                <label asp-for="Form.Telefoon" class="form-label"></label>
+                <input asp-for="Form.Telefoon" class="form-control" />
+                <span asp-validation-for="Form.Telefoon" class="text-danger small"></span>
+            </div>
+            <button class="btn btn-primary">Toevoegen</button>
+        </form>
+    </div>
+</div>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

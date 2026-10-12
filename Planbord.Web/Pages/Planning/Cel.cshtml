@@ -1,0 +1,82 @@
+@page
+@model Planbord.Web.Pages.Planning.CelModel
+@{
+    ViewData["Title"] = Model.Titel;
+    var route = new Dictionary<string, string?> { ["medewerkerId"] = Model.MedewerkerId?.ToString(), ["projectId"] = Model.ProjectId?.ToString(), ["datum"] = Model.Datum.ToString("yyyy-MM-dd") };
+}
+<a asp-page="Index" asp-route-week="@Model.Datum.ToString("yyyy-MM-dd")" asp-route-weergave="@(Model.ProjectId is null ? "medewerker" : "project")">&larr; Planning</a>
+<h1 class="h3 mt-2">@Model.Titel · @Model.Datum.ToString("dddd d MMMM")</h1>
+
+@if (Model.Rijen.Count == 0)
+{
+    <p class="text-muted">Nog niets gepland.</p>
+}
+<ul class="list-group mb-4" style="max-width: 48rem">
+    @foreach (var r in Model.Rijen)
+    {
+        <li class="list-group-item">
+            <div class="d-flex flex-wrap align-items-center gap-2">
+                <strong>@(Model.ProjectId is null ? r.Project.Naam : r.Medewerker.Naam)</strong>
+                @if (r.IsConflict) { <span class="badge text-bg-danger">Conflict</span> }
+                else if (r.IsInterventie) { <span class="badge text-bg-warning">Interventie</span> }
+                <div class="ms-auto d-flex gap-1">
+                    @if (r.IsConflict)
+                    {
+                        <form method="post" asp-page-handler="Goedkeuren" asp-all-route-data="route"><input type="hidden" name="id" value="@r.Id" /><button class="btn btn-sm btn-success">Goedkeuren</button></form>
+                    }
+                    <form method="post" asp-page-handler="Verwijder" asp-all-route-data="route"><input type="hidden" name="id" value="@r.Id" /><button class="btn btn-sm btn-outline-danger">Verwijderen</button></form>
+                </div>
+            </div>
+            <details class="mt-2">
+                <summary class="small">Verplaatsen</summary>
+                <form method="post" asp-page-handler="Verplaats" asp-all-route-data="route" class="row g-2 mt-1">
+                    <input type="hidden" name="id" value="@r.Id" />
+                    <div class="col-sm-4">
+                        <label class="form-label small" for="m@(r.Id)">Medewerker</label>
+                        <select class="form-select form-select-sm" id="m@(r.Id)" name="naarMedewerker">
+                            @foreach (var m in Model.Medewerkers) { <option value="@m.Id" selected="@(m.Id == r.MedewerkerId)">@m.Naam</option> }
+                        </select>
+                    </div>
+                    <div class="col-sm-4">
+                        <label class="form-label small" for="p@(r.Id)">Werf</label>
+                        <select class="form-select form-select-sm" id="p@(r.Id)" name="naarProject">
+                            @foreach (var p in Model.Projecten) { <option value="@p.Id" selected="@(p.Id == r.ProjectId)">@p.Naam</option> }
+                        </select>
+                    </div>
+                    <div class="col-sm-3">
+                        <label class="form-label small" for="d@(r.Id)">Datum</label>
+                        <input class="form-control form-control-sm" type="date" id="d@(r.Id)" name="naarDatum" value="@r.Datum.ToString("yyyy-MM-dd")" required />
+                    </div>
+                    <div class="col-sm-1 d-flex align-items-end"><button class="btn btn-sm btn-primary">OK</button></div>
+                </form>
+            </details>
+        </li>
+    }
+</ul>
+
+<h2 class="h5">Toevoegen</h2>
+<form method="post" asp-page-handler="Toevoegen" asp-all-route-data="route" class="row g-2" style="max-width: 36rem">
+    @if (Model.MedewerkerId is { } mid)
+    {
+
+        <div class="col-sm-9">
+            <label class="form-label small" for="nieuwProject">Werf</label>
+            <select class="form-select" id="nieuwProject" name="kies" required>
+                <option value="">Kies een werf…</option>
+                @foreach (var p in Model.Projecten) { <option value="@p.Id">@p.Naam</option> }
+            </select>
+        </div>
+    }
+    else
+    {
+
+        <div class="col-sm-9">
+            <label class="form-label small" for="nieuweMedewerker">Medewerker</label>
+            <select class="form-select" id="nieuweMedewerker" name="kies" required>
+                <option value="">Kies een medewerker…</option>
+                @foreach (var m in Model.Medewerkers) { <option value="@m.Id">@m.Naam</option> }
+            </select>
+        </div>
+    }
+    <div class="col-sm-3 d-flex align-items-end"><button class="btn btn-primary w-100">Toevoegen</button></div>
+</form>

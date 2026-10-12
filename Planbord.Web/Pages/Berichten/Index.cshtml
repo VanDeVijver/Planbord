@@ -1,0 +1,46 @@
+@page
+@model Planbord.Web.Pages.Berichten.IndexModel
+@{
+    ViewData["Title"] = "Berichten";
+    var d = Model.Dag;
+}
+<div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+    <h1 class="h3 mb-0 me-2">Berichten</h1>
+    <form method="get" class="d-flex gap-1">
+        <label for="datum" class="visually-hidden">Datum</label>
+        <input type="date" id="datum" name="datum" value="@d.ToString("yyyy-MM-dd")" class="form-control form-control-sm" onchange="this.form.submit()" />
+        <noscript><button class="btn btn-sm btn-outline-secondary">Toon</button></noscript>
+    </form>
+</div>
+<p class="small text-muted">De samenvatting wordt live opgebouwd uit planning en open werftaken. Alleen je extra tekst wordt bewaard.</p>
+<div class="row row-cols-1 row-cols-lg-2 g-3">
+    @foreach (var (m, samenvatting, b) in Model.Rijen)
+    {
+        <div class="col">
+            <div class="card h-100">
+                <div class="card-body">
+                    <div class="d-flex align-items-center mb-2">
+                        <h2 class="h6 mb-0">@m.Naam</h2>
+                        <span class="ms-auto small @(b?.GezienOp is null ? "text-muted" : "text-success")">
+                            @(b is null ? "Geen bericht" : b.GezienOp is { } g ? "Gelezen " + g.ToLocalTime().ToString("dd/MM HH:mm") : "Nog niet gelezen")
+                        </span>
+                    </div>
+                    <pre class="bericht small bg-light p-2 rounded">@samenvatting</pre>
+                    <form method="post">
+                        <input type="hidden" name="Datum" value="@d.ToString("yyyy-MM-dd")" />
+                        <input type="hidden" name="medewerkerId" value="@m.Id" />
+                        <label class="form-label small" for="x@(m.Id)">Extra tekst</label>
+                        <textarea class="form-control mb-2" id="x@(m.Id)" name="extraTekst" rows="2" maxlength="2000">@b?.ExtraTekst</textarea>
+                        <button class="btn btn-sm btn-primary">Klaarzetten</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+@section Scripts {
+<script>
+    // Reload when an employee reads a message for this day (read status changes).
+    luisterNaarSignalen(s => { if (s.soort === 'bericht' && s.datum === '@d.ToString("yyyy-MM-dd")' && !document.activeElement.matches('textarea')) location.reload(); });
+</script>
+}

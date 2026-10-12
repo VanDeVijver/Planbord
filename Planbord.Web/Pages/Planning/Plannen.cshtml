@@ -1,0 +1,58 @@
+@page
+@model Planbord.Web.Pages.Planning.PlannenModel
+@{
+    ViewData["Title"] = "Plannen";
+    var dagen = new[] { DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday, DayOfWeek.Thursday, DayOfWeek.Friday, DayOfWeek.Saturday, DayOfWeek.Sunday };
+}
+<h1 class="h3">Plannen</h1>
+@if (Model.Overgeslagen.Count > 0)
+{
+    <div class="alert alert-warning" role="alert">
+        Niet overal gepland:
+        <ul class="mb-0">@foreach (var o in Model.Overgeslagen) { <li>@o</li> }</ul>
+    </div>
+}
+<form method="post" style="max-width: 48rem">
+    <div asp-validation-summary="All" class="text-danger" role="alert"></div>
+    <div class="row g-3">
+        <div class="col-md-6">
+            <label asp-for="Form.ProjectId" class="form-label"></label>
+            <select asp-for="Form.ProjectId" class="form-select" asp-items="@(new SelectList(Model.Projecten, "Id", "Naam"))">
+                <option value="">Kies een werf…</option>
+            </select>
+        </div>
+        <div class="col-6 col-md-3">
+            <label asp-for="Form.Van" class="form-label"></label>
+            <input asp-for="Form.Van" class="form-control" />
+        </div>
+        <div class="col-6 col-md-3">
+            <label asp-for="Form.Tot" class="form-label"></label>
+            <input asp-for="Form.Tot" class="form-control" />
+        </div>
+        <fieldset class="col-12">
+            <legend class="form-label fs-6">Weekdagen</legend>
+            @foreach (var d in dagen)
+            {
+                <div class="form-check form-check-inline">
+                    <input class="form-check-input" type="checkbox" name="Form.Weekdagen" value="@d" id="wd-@d" checked="@Model.Form.Weekdagen.Contains(d)" />
+                    <label class="form-check-label" for="wd-@d">@System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.GetAbbreviatedDayName(d)</label>
+                </div>
+            }
+        </fieldset>
+        <fieldset class="col-12">
+            <legend class="form-label fs-6">Medewerkers</legend>
+            <div class="row row-cols-2 row-cols-md-3">
+                @foreach (var m in Model.Medewerkers)
+                {
+                    <div class="col form-check">
+                        <input class="form-check-input" type="checkbox" name="Form.MedewerkerIds" value="@m.Id" id="mw-@m.Id" checked="@Model.Form.MedewerkerIds.Contains(m.Id)" />
+                        <label class="form-check-label" for="mw-@m.Id">@m.Naam</label>
+                    </div>
+                }
+            </div>
+        </fieldset>
+    </div>
+    <button class="btn btn-primary mt-3">Plannen</button>
+    <p class="small text-muted mt-2">Afwezige medewerkers worden overgeslagen. Een tweede werf op dezelfde dag wordt een interventie die nog goedgekeurd moet worden.</p>
+</form>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

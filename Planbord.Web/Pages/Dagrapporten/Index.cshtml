@@ -1,0 +1,29 @@
+@page
+@model Planbord.Web.Pages.Dagrapporten.IndexModel
+@{
+    ViewData["Title"] = "Dagrapporten";
+    var d = Model.Dag.ToString("yyyy-MM-dd");
+}
+<div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+    <h1 class="h3 mb-0 me-2">Dagrapporten</h1>
+    <form method="get" class="d-flex gap-1">
+        <label for="datum" class="visually-hidden">Datum</label>
+        <input type="date" id="datum" name="datum" value="@d" class="form-control form-control-sm" onchange="this.form.submit()" />
+        <noscript><button class="btn btn-sm btn-outline-secondary">Toon</button></noscript>
+    </form>
+</div>
+<div id="tabel" aria-live="polite" aria-busy="true">
+    @for (var i = 0; i < 5; i++) { <div class="skelet" style="width: @(90 - i * 8)%"></div> }
+</div>
+@section Scripts {
+<script>
+    const tabel = document.getElementById('tabel');
+    async function laad() {
+        const res = await fetch('?handler=Tabel&datum=@d');
+        tabel.innerHTML = await res.text();
+        tabel.setAttribute('aria-busy', 'false');
+    }
+    laad();
+    luisterNaarSignalen(s => { if (s.soort === 'rapport' && s.datum === '@d') laad(); });
+</script>
+}

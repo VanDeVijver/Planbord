@@ -1,0 +1,8 @@
+**/bin/
+**/obj/
+**/.vs/
+**/*.user
+.git/
+Planbord.Tests/
+docker-compose.yaml
+README.md

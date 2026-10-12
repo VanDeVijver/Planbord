@@ -1,0 +1,27 @@
+@page
+@model Planbord.Web.Pages.Account.LoginModel
+@{
+    ViewData["Title"] = "Aanmelden";
+}
+<div class="mx-auto mt-4" style="max-width: 24rem">
+    <h1 class="h3 mb-3">Aanmelden</h1>
+    <form method="post">
+        <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+        <div class="mb-3">
+            <label asp-for="Form.Email" class="form-label"></label>
+            <input asp-for="Form.Email" class="form-control" autocomplete="username" autofocus />
+            <span asp-validation-for="Form.Email" class="text-danger small"></span>
+        </div>
+        <div class="mb-3">
+            <label asp-for="Form.Wachtwoord" class="form-label"></label>
+            <input asp-for="Form.Wachtwoord" class="form-control" autocomplete="current-password" />
+            <span asp-validation-for="Form.Wachtwoord" class="text-danger small"></span>
+        </div>
+        <div class="form-check mb-3">
+            <input asp-for="Form.Onthouden" class="form-check-input" />
+            <label asp-for="Form.Onthouden" class="form-check-label"></label>
+        </div>
+        <button class="btn btn-primary w-100">Aanmelden</button>
+    </form>
+</div>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

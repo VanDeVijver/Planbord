@@ -1,0 +1,78 @@
+@page
+@model Planbord.Web.Pages.Overzichten.PrognoseModel
+@{
+    ViewData["Title"] = "Prognose";
+    var cat = DashboardModel.Categorieen[Model.Categorie - 1];
+    string StartTekst(int? i) => i is null ? "niet binnen 3 jaar" : i == 0 ? "nu" : Model.Maandbegin[i.Value].ToString("MMMM yyyy");
+}
+<h1 class="h3">Prognose</h1>
+<p class="small text-muted">Wie heeft ruimte voor een nieuw project? Gepland tegen 38 u per week, met het vaste deel van de week per projectlengte. Verlof telt niet mee.</p>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        <form method="get" class="d-flex flex-wrap align-items-end gap-2 mb-3">
+            <div>
+                <label for="duur" class="form-label small mb-0">Looptijd nieuw project (maanden)</label>
+                <input type="number" id="duur" name="duur" min="1" max="24" value="@Model.Duur" class="form-control form-control-sm" style="width: 8rem" required />
+            </div>
+            <button class="btn btn-sm btn-primary">Bereken</button>
+            <span class="small ms-2">
+                <span class="kleurstaal" style="background:@cat.Kleur"></span>@cat.Label · @Model.Procent% van de week (@((Model.Procent * 0.38).ToString("0.0")) u)
+            </span>
+        </form>
+
+        <div class="table-responsive">
+            <table class="table align-middle">
+                <thead>
+                    <tr><th scope="col">#</th><th scope="col">Medewerker</th><th scope="col">Kan starten</th><th scope="col" class="text-end">Vrije uren over looptijd</th><th scope="col" class="text-end">Vrij deze maand</th></tr>
+                </thead>
+                <tbody>
+                    @for (var i = 0; i < Model.Kandidaten.Count; i++)
+                    {
+                        var k = Model.Kandidaten[i];
+                        <tr>
+                            <td>@(i + 1)</td>
+                            <td><a asp-page="/Dashboard" asp-route-medewerkerId="@k.Medewerker.Id">@k.Medewerker.Naam</a></td>
+                            <td class="@(k.Vanaf is null ? "text-muted" : i == 0 ? "fw-semibold" : "")">@StartTekst(k.Vanaf)</td>
+                            <td class="text-end">@k.VrijeUren.ToString("0") u</td>
+                            <td class="text-end">@(k.DezeMaand.Overboekt ? "overboekt" : (k.DezeMaand.VrijAandeel * 100).ToString("0") + "%")</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <p class="small text-muted">Beste persoon = wie het vroegst kan starten; bij gelijkstand wie over de looptijd de meeste vrije uren heeft.</p>
+
+        @if (Model.Verlopen.Count > 0)
+        {
+            <h2 class="h6 mt-4">Einddatum verstreken, nog gepland</h2>
+            <p class="small text-muted">Deze projecten houden hun last tot de einddatum is aangepast.</p>
+            <ul class="small">
+                @foreach (var (m, p) in Model.Verlopen)
+                {
+                    <li><a asp-page="/Projecten/Detail" asp-route-id="@p.Id">@p.Naam</a> (einde @p.Einddatum?.ToString("d MMM yyyy")) · @m.Naam</li>
+                }
+            </ul>
+        }
+    </div>
+
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-body">
+                <h2 class="h6">Deel van de week per projectlengte</h2>
+                <form method="post" asp-page-handler="Aandelen" asp-route-duur="@Model.Duur">
+                    @for (var i = 0; i < 5; i++)
+                    {
+                        var c = DashboardModel.Categorieen[i];
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                            <label for="a@(i)" class="me-auto small"><span class="kleurstaal" style="background:@c.Kleur"></span>@c.Label</label>
+                            <input type="number" id="a@(i)" name="Aandelen" value="@Model.Aandelen[i]" min="0" max="100" required class="form-control form-control-sm text-end" style="width: 5rem" />
+                            <span class="small">%</span>
+                        </div>
+                    }
+                    <button class="btn btn-sm btn-outline-primary mt-1">Opslaan</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

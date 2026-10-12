@@ -1,0 +1,56 @@
+@page
+@model Planbord.Web.Pages.Projecten.DetailModel
+@{
+    ViewData["Title"] = Model.Project.Naam;
+}
+<a asp-page="Index">&larr; Projecten</a>
+<h1 class="h3 mt-2">@Model.Project.Naam@if (Model.Project.Gearchiveerd) { <small class="text-muted fs-6"> (gearchiveerd)</small> }</h1>
+<div class="row g-4">
+    <div class="col-lg-5">
+        <h2 class="h5">Gegevens</h2>
+        <form method="post">
+            <div class="mb-2">
+                <label asp-for="Form.Naam" class="form-label"></label>
+                <input asp-for="Form.Naam" class="form-control" />
+                <span asp-validation-for="Form.Naam" class="text-danger small"></span>
+            </div>
+            <div class="mb-2">
+                <label asp-for="Form.Adres" class="form-label"></label>
+                <input asp-for="Form.Adres" class="form-control" />
+            </div>
+            <div class="row g-2 mb-3">
+                <div class="col"><label asp-for="Form.Startdatum" class="form-label"></label><input asp-for="Form.Startdatum" class="form-control" /></div>
+                <div class="col"><label asp-for="Form.Einddatum" class="form-label"></label><input asp-for="Form.Einddatum" class="form-control" /></div>
+                <span asp-validation-for="Form.Einddatum" class="text-danger small"></span>
+            </div>
+            <button class="btn btn-primary">Opslaan</button>
+        </form>
+    </div>
+    <div class="col-lg-7">
+        <h2 class="h5">Werftaken</h2>
+        <p class="small text-muted">Deze lijst geldt voor alle dagen waarop de werf gepland is.</p>
+        <ul class="list-group mb-3">
+            @foreach (var t in Model.Project.Taken)
+            {
+                <li class="list-group-item d-flex align-items-center gap-2">
+                    <form method="post" asp-page-handler="Wissel" asp-route-id="@Model.Id">
+                        <input type="hidden" name="taakId" value="@t.Id" />
+                        <button class="btn btn-sm @(t.Klaar ? "btn-success" : "btn-outline-secondary")" aria-label="@(t.Klaar ? "Markeer als open" : "Markeer als klaar"): @t.Omschrijving">@(t.Klaar ? "✓" : "○")</button>
+                    </form>
+                    <span class="@(t.Klaar ? "text-decoration-line-through text-muted" : "")">@t.Omschrijving</span>
+                    @if (t.Klaar) { <span class="small text-muted ms-1">@t.KlaarDoor</span> }
+                    <form method="post" asp-page-handler="VerwijderTaak" asp-route-id="@Model.Id" class="ms-auto">
+                        <input type="hidden" name="taakId" value="@t.Id" />
+                        <button class="btn btn-sm btn-link text-danger" aria-label="Taak verwijderen: @t.Omschrijving">Verwijderen</button>
+                    </form>
+                </li>
+            }
+        </ul>
+        <form method="post" asp-page-handler="Taak" asp-route-id="@Model.Id" class="d-flex gap-2">
+            <label for="nieuweTaak" class="visually-hidden">Nieuwe taak</label>
+            <input id="nieuweTaak" name="NieuweTaak" class="form-control" maxlength="300" placeholder="Nieuwe taak" required />
+            <button class="btn btn-outline-primary">Toevoegen</button>
+        </form>
+    </div>
+</div>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

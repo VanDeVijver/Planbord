@@ -1,0 +1,7 @@
+@page
+@{
+    ViewData["Title"] = "Er ging iets mis";
+}
+<h1>Er ging iets mis</h1>
+<p>Er is een onverwachte fout opgetreden. Probeer het opnieuw, of ga terug naar <a asp-page="/Index">de startpagina</a>.</p>
+<p class="small text-muted">Referentie: @(System.Diagnostics.Activity.Current?.Id ?? HttpContext.TraceIdentifier)</p>

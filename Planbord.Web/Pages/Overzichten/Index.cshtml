@@ -1,0 +1,116 @@
+@page
+@model Planbord.Web.Pages.Overzichten.IndexModel
+@{
+    ViewData["Title"] = "Overzichten";
+    var filter = new Dictionary<string, string?>
+    {
+        ["van"] = Model.Begin.ToString("yyyy-MM-dd"), ["tot"] = Model.Einde.ToString("yyyy-MM-dd"),
+        ["projectId"] = Model.ProjectId?.ToString(), ["medewerkerId"] = Model.MedewerkerId?.ToString(), ["groep"] = Model.Groep,
+    };
+}
+<h1 class="h3">Overzichten</h1>
+
+<form method="get" class="row g-2 align-items-end mb-4 d-print-none">
+    <div class="col-6 col-md-2"><label class="form-label small" for="van">Van</label><input type="date" class="form-control form-control-sm" id="van" name="van" value="@Model.Begin.ToString("yyyy-MM-dd")" /></div>
+    <div class="col-6 col-md-2"><label class="form-label small" for="tot">Tot en met</label><input type="date" class="form-control form-control-sm" id="tot" name="tot" value="@Model.Einde.ToString("yyyy-MM-dd")" /></div>
+    <div class="col-6 col-md-3">
+        <label class="form-label small" for="projectId">Project</label>
+        <select class="form-select form-select-sm" id="projectId" name="projectId">
+            <option value="">Alle</option>
+            @foreach (var p in Model.Projecten) { <option value="@p.Id" selected="@(p.Id == Model.ProjectId)">@p.Naam</option> }
+        </select>
+    </div>
+    <div class="col-6 col-md-2">
+        <label class="form-label small" for="medewerkerId">Medewerker</label>
+        <select class="form-select form-select-sm" id="medewerkerId" name="medewerkerId">
+            <option value="">Alle</option>
+            @foreach (var m in Model.Medewerkers) { <option value="@m.Id" selected="@(m.Id == Model.MedewerkerId)">@m.Naam</option> }
+        </select>
+    </div>
+    <div class="col-6 col-md-2">
+        <label class="form-label small" for="groep">Groeperen per</label>
+        <select class="form-select form-select-sm" id="groep" name="groep">
+            <option value="dag" selected="@(Model.Groep == "dag")">Dag</option>
+            <option value="project" selected="@(Model.Groep == "project")">Project</option>
+            <option value="medewerker" selected="@(Model.Groep == "medewerker")">Medewerker</option>
+        </select>
+    </div>
+    <div class="col-6 col-md-1"><button class="btn btn-sm btn-primary w-100">Toon</button></div>
+</form>
+
+<section class="mb-5" aria-labelledby="h-uren">
+    <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+        <h2 id="h-uren" class="h5 mb-0">Urenrapport @Model.Begin.ToString("dd/MM") – @Model.Einde.ToString("dd/MM/yyyy")</h2>
+        <div class="ms-auto d-flex gap-1 d-print-none">
+            <button type="button" class="btn btn-sm btn-outline-secondary" data-kopieer="uren">Kopiëren</button>
+            <a class="btn btn-sm btn-outline-secondary" asp-page-handler="Csv" asp-all-route-data="filter">CSV</a>
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="print()">Afdrukken / PDF</button>
+        </div>
+    </div>
+    @if (Model.Uren.Count == 0)
+    {
+        <p class="text-muted">Geen ingediende uren in deze periode.</p>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-sm" id="uren">
+                <thead><tr><th scope="col">Datum</th><th scope="col">Medewerker</th><th scope="col">Project</th><th scope="col" class="text-end">Uren</th><th scope="col">Omschrijving</th></tr></thead>
+                @foreach (var g in Model.Gegroepeerd)
+                {
+                    <tbody>
+                        <tr class="table-light"><th scope="rowgroup" colspan="3">@g.Key</th><th class="text-end">@Duur.Formatteer(g.Sum(u => u.Minuten))</th><td></td></tr>
+                        @foreach (var u in g)
+                        {
+                            <tr><td>@u.Datum.ToString("dd/MM")</td><td>@u.Medewerker</td><td>@u.Project</td><td class="text-end">@Duur.Formatteer(u.Minuten)</td><td class="small">@u.Omschrijving</td></tr>
+                        }
+                    </tbody>
+                }
+                <tfoot><tr><th colspan="3">Totaal</th><th class="text-end">@Duur.Formatteer(Model.Uren.Sum(u => u.Minuten))</th><td></td></tr></tfoot>
+            </table>
+        </div>
+    }
+</section>
+
+<div class="row g-4 d-print-none">
+    <section class="col-lg-5" aria-labelledby="h-bezetting">
+        <h2 id="h-bezetting" class="h5">Bezetting per werf</h2>
+        <table class="table table-sm">
+            <thead><tr><th scope="col">Werf</th><th scope="col" class="text-end">Mandagen</th><th scope="col" class="text-end">Medewerkers</th></tr></thead>
+            <tbody>
+                @foreach (var b in Model.Bezettingen)
+                {
+                    <tr><td>@b.Project</td><td class="text-end">@b.Mandagen</td><td class="text-end">@b.Medewerkers</td></tr>
+                }
+            </tbody>
+        </table>
+    </section>
+
+    <section class="col-lg-7" aria-labelledby="h-week">
+        <h2 id="h-week" class="h5">Week van @Model.VolgendeMaandag.ToString("d MMMM")</h2>
+        <h3 class="h6 mt-3">Lege planning</h3>
+        @if (Model.Beschikbaar.Count == 0) { <p class="small text-muted">Iedereen is ingepland.</p> }
+        <ul class="small">
+            @foreach (var (m, dagen) in Model.Beschikbaar)
+            {
+                <li><strong>@m.Naam</strong>: @string.Join(", ", dagen.Select(d => d.ToString("ddd")))</li>
+            }
+        </ul>
+        <h3 class="h6 mt-3">Afwezig</h3>
+        @if (Model.AfwezigVolgendeWeek.Count == 0) { <p class="small text-muted">Niemand.</p> }
+        <ul class="small">
+            @foreach (var a in Model.AfwezigVolgendeWeek) { <li>@a.Medewerker.Naam · @a.Reden (@a.Van.ToString("dd/MM") – @a.Tot.ToString("dd/MM"))</li> }
+        </ul>
+        <h3 class="h6 mt-3">Niet goedgekeurde conflicten</h3>
+        @if (Model.Conflicten.Count == 0) { <p class="small text-muted">Geen.</p> }
+        <ul class="list-group">
+            @foreach (var c in Model.Conflicten)
+            {
+                <li class="list-group-item d-flex align-items-center gap-2 small">
+                    <span>@c.Datum.ToString("ddd dd/MM") · @c.Medewerker.Naam · @c.Project.Naam</span>
+                    <form method="post" asp-page-handler="Goedkeuren" asp-route-id="@c.Id" class="ms-auto"><button class="btn btn-sm btn-success">Goedkeuren</button></form>
+                </li>
+            }
+        </ul>
+    </section>
+</div>

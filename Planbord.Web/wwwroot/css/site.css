@@ -1,0 +1,148 @@
+/* Black-and-white theme on top of Bootstrap 5.1. Red is kept only for conflicts and destructive actions. */
+:root {
+    --ink: #111;
+    --ink-soft: #444;
+    --muted: #6b6b6b;
+    --line: #e3e3e3;
+    --paper: #fff;
+    --canvas: #f4f4f4;
+    --alarm: #b00020;
+    --radius: .75rem;
+    --radius-sm: .5rem;
+}
+
+html { font-size: 15px; }
+body {
+    background: var(--canvas);
+    color: var(--ink);
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+h1, h2, h3, .h1, .h2, .h3, .h4, .h5, .h6 { font-weight: 600; letter-spacing: -.01em; }
+.text-muted { color: var(--muted) !important; }
+
+a { color: var(--ink); text-underline-offset: .2em; }
+a:hover { color: var(--ink-soft); }
+:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+
+/* Header, page panel, footer */
+.navbar { background: var(--paper) !important; border-bottom: 1px solid var(--line) !important; }
+.navbar-brand { color: var(--ink) !important; font-weight: 700; }
+.navbar .nav-link { color: var(--muted) !important; padding-left: .6rem; padding-right: .6rem; border-radius: var(--radius-sm); white-space: nowrap; }
+.navbar .nav-link:hover { color: var(--ink) !important; background: var(--canvas); }
+
+main {
+    background: var(--paper);
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+@media (max-width: 575.98px) { main { padding: 1rem; } }
+footer { border-top: 0 !important; }
+
+/* Buttons */
+.btn { border-radius: var(--radius-sm); }
+.btn-primary, .btn-success, .btn-dark {
+    background: var(--ink); border-color: var(--ink); color: #fff;
+}
+.btn-primary:hover, .btn-success:hover, .btn-dark:hover,
+.btn-primary:focus, .btn-success:focus { background: #333; border-color: #333; color: #fff; }
+.btn-outline-primary, .btn-outline-secondary, .btn-outline-warning {
+    color: var(--ink); border-color: #bdbdbd; background: var(--paper);
+}
+.btn-outline-primary:hover, .btn-outline-secondary:hover, .btn-outline-warning:hover {
+    background: var(--ink); border-color: var(--ink); color: #fff;
+}
+.btn-danger { background: var(--alarm); border-color: var(--alarm); }
+.btn-outline-danger { color: var(--alarm); border-color: var(--alarm); }
+.btn-outline-danger:hover { background: var(--alarm); color: #fff; }
+.btn-link { color: var(--ink); }
+.btn-check:focus + .btn, .btn:focus { box-shadow: 0 0 0 .2rem rgba(0, 0, 0, .15); }
+.btn.disabled { opacity: 1; color: var(--ink); }
+
+/* Forms */
+.form-control, .form-select { border-radius: var(--radius-sm); border-color: #cfcfcf; }
+.form-control:focus, .form-select:focus { border-color: var(--ink); box-shadow: 0 0 0 .2rem rgba(0, 0, 0, .1); }
+.form-check-input:checked { background-color: var(--ink); border-color: var(--ink); }
+.form-check-input:focus { border-color: var(--ink); box-shadow: 0 0 0 .2rem rgba(0, 0, 0, .1); }
+fieldset.border { border-color: var(--line) !important; border-radius: var(--radius) !important; }
+
+/* Nav pills (day picker) */
+.nav-pills .nav-link { color: var(--ink); border-radius: 999px; }
+.nav-pills .nav-link.active { background: var(--ink); color: #fff; }
+
+/* Cards, lists, alerts, tables */
+.card, .list-group { border-radius: var(--radius); border-color: var(--line); }
+.list-group-item { border-color: var(--line); }
+.list-group-item:first-child { border-top-left-radius: var(--radius); border-top-right-radius: var(--radius); }
+.list-group-item:last-child { border-bottom-left-radius: var(--radius); border-bottom-right-radius: var(--radius); }
+.bg-light { background: var(--canvas) !important; }
+.rounded { border-radius: var(--radius-sm) !important; }
+
+.alert { border-radius: var(--radius); }
+.alert-info { background: var(--canvas); border-color: var(--line); color: var(--ink); }
+.alert-warning { background: var(--paper); border: 1px solid var(--line); border-left: 4px solid var(--ink); color: var(--ink); }
+.alert-danger { background: #fdf2f4; border-color: #f0c9d0; color: var(--alarm); }
+.alert-link { color: inherit; }
+
+.table { --bs-table-striped-bg: var(--canvas); color: var(--ink); }
+.table > thead th { color: var(--muted); font-weight: 600; font-size: .85rem; border-bottom: 1px solid var(--ink); }
+.table > :not(caption) > * > * { border-color: var(--line); }
+.table-light, .table-light > th, .table-light > td { background: var(--canvas); }
+.table-responsive { border-radius: var(--radius-sm); }
+
+/* Badges (Bootstrap 5.1 has no text-bg-* helpers, so define them here) */
+.badge { border-radius: 999px; font-weight: 600; padding: .35em .7em; }
+.text-bg-primary { background: var(--ink); color: #fff; }
+.text-bg-secondary { background: #e9e9e9; color: var(--ink); }
+.text-bg-success { background: var(--paper); color: var(--ink); border: 1px solid var(--ink); }
+.text-bg-warning { background: var(--paper); color: var(--ink); border: 1px dashed var(--ink); }
+.text-bg-danger { background: var(--alarm); color: #fff; }
+.text-success { color: var(--ink) !important; font-weight: 600; }
+
+/* Planning grid */
+.bord { min-width: 900px; table-layout: fixed; }
+.bord th:first-child, .bord td:first-child { width: 170px; }
+.bord td { vertical-align: top; min-height: 3rem; }
+.bord td.vandaag, .bord th.vandaag { background: #f0f0f0; }
+.bord td.afwezig { background: repeating-linear-gradient(45deg, #f6f6f6, #f6f6f6 6px, #ebebeb 6px, #ebebeb 12px); }
+.bord td.drop { outline: 2px dashed var(--ink); outline-offset: -2px; }
+.chip { display: block; padding: .2rem .5rem; margin-bottom: .25rem; border-radius: var(--radius-sm); background: #ececec; font-size: .85rem; cursor: grab; text-decoration: none; color: var(--ink); }
+.chip:hover { background: #e0e0e0; color: var(--ink); }
+.chip.interventie { background: var(--paper); border: 1px dashed var(--ink); }
+.chip.conflict { background: var(--paper); border: 2px solid var(--alarm); color: var(--alarm); }
+
+/* Employee dashboard: pastel category colours, always paired with a text label */
+.kleurstaal { display: inline-block; width: .9rem; height: .9rem; border-radius: .25rem; margin-right: .4rem; vertical-align: -.1rem; border: 1px solid rgba(0, 0, 0, .12); }
+.cat-rij { padding: .9rem 0; border-top: 1px solid var(--line); }
+.cat-rij:first-child { border-top: 0; padding-top: 0; }
+.cat-kop { display: flex; align-items: center; margin-bottom: .6rem; }
+.kaarten { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: .75rem; }
+.pkaart { border-radius: var(--radius); padding: .75rem .9rem; color: var(--ink); border: 1px solid rgba(0, 0, 0, .06); }
+.pkaart .badge.status { background: rgba(255, 255, 255, .75); color: var(--ink); border: 1px solid rgba(0, 0, 0, .15); }
+.taart { display: block; width: 100%; max-width: 220px; margin: 0 auto; }
+.taart path:hover, .taart circle:hover { filter: brightness(.95); }
+.taart-totaal { font-size: 9px; font-weight: 700; fill: var(--ink); }
+.taart-sub { font-size: 5px; fill: var(--muted); }
+
+/* Availability forecast: free share per month (mint), overbooked months in rose */
+.maanden { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: .5rem; margin: 0; }
+@media (max-width: 767.98px) { .maanden { grid-template-columns: repeat(6, minmax(0, 1fr)); row-gap: 1rem; } }
+.maand { text-align: center; }
+.maand-balk { height: 110px; background: #f1f1f1; border-radius: var(--radius-sm); display: flex; align-items: flex-end; overflow: hidden; }
+.maand-vulling { width: 100%; background: #CDEBDD; }
+.maand.overboekt .maand-balk { background: #F7D3DA; }
+.maand-naam { font-size: .8rem; color: var(--muted); margin-top: .3rem; }
+
+/* Skeleton loader */
+.skelet { background: linear-gradient(90deg, #eee 25%, #f7f7f7 37%, #eee 63%); background-size: 400% 100%; animation: skelet 1.4s ease infinite; border-radius: var(--radius-sm); height: 1.2rem; margin: .5rem 0; }
+@keyframes skelet { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }
+@media (prefers-reduced-motion: reduce) { .skelet { animation: none; } }
+
+.bericht { white-space: pre-wrap; font-family: inherit; }
+
+@media print {
+    body, main { background: #fff; border: 0; padding: 0; }
+    a[href]::after { content: none; }
+    .table { font-size: 11px; }
+}

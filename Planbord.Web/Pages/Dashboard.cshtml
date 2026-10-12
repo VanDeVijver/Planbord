@@ -1,0 +1,206 @@
+@page
+@model DashboardModel
+@{
+    ViewData["Title"] = "Dashboard";
+    var m = Model.Medewerker;
+    string Uren(int minuten) => Duur.Formatteer(minuten) + " u";
+    string Procent(int minuten) => Model.TotaalMinuten == 0 ? "0%" : (100.0 * minuten / Model.TotaalMinuten).ToString("0") + "%";
+}
+<div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+    <h1 class="h3 mb-0 me-2">Dashboard</h1>
+    @if (Model.AlleMedewerkers.Count > 0)
+    {
+        <form method="get" class="ms-md-auto">
+            <input type="hidden" name="periode" value="@Model.Periode" />
+            <input type="hidden" name="weergave" value="@Model.Weergave" />
+            <label for="kiesMw" class="visually-hidden">Medewerker</label>
+            <select id="kiesMw" name="medewerkerId" class="form-select form-select-sm" onchange="this.form.submit()">
+                @foreach (var x in Model.AlleMedewerkers) { <option value="@x.Id" selected="@(x.Id == m?.Id)">@x.Naam</option> }
+            </select>
+            <noscript><button class="btn btn-sm btn-outline-secondary mt-1">Toon</button></noscript>
+        </form>
+    }
+</div>
+
+@if (m is null)
+{
+    <p>Je account is nog niet gekoppeld aan een medewerker. Vraag de zaakvoerder om dit in te stellen.</p>
+    return;
+}
+
+<p class="mb-2">
+    <strong>@m.Naam</strong> · @Model.Kaarten.Count project(en):
+    @Model.Kaarten.Count(k => k.Status == ProjectStatus.Actief) actief,
+    @Model.Kaarten.Count(k => k.Status == ProjectStatus.RecentAfgerond) recent afgerond
+</p>
+<ul class="list-inline small mb-4" aria-label="Legende projectduur">
+    @foreach (var c in DashboardModel.Categorieen)
+    {
+        <li class="list-inline-item me-3"><span class="kleurstaal" style="background:@c.Kleur"></span>@c.Label</li>
+    }
+</ul>
+
+<div class="row g-4">
+    <div class="col-lg-8">
+        @foreach (var c in DashboardModel.Categorieen)
+        {
+            var kaarten = Model.Kaarten.Where(k => k.Categorie == c.Nr).ToList();
+            <section class="cat-rij" aria-labelledby="cat-@c.Nr">
+                <h2 id="cat-@c.Nr" class="cat-kop h6">
+                    <span class="kleurstaal" style="background:@c.Kleur"></span>@c.Label
+                    <span class="badge text-bg-secondary ms-1">@kaarten.Count</span>
+                </h2>
+                @if (kaarten.Count == 0)
+                {
+                    <p class="small text-muted mb-0">Geen projecten.</p>
+                }
+                else
+                {
+                    <div class="kaarten">
+                        @foreach (var k in kaarten)
+                        {
+                            var p = k.Project;
+                            <article class="pkaart" style="background:@c.Kleur">
+                                <h3 class="h6 mb-1">@p.Naam</h3>
+                                <div class="small">@(p.Startdatum?.ToString("d MMM yyyy") ?? "Start onbekend") – @(p.Einddatum?.ToString("d MMM yyyy") ?? "geen einddatum")</div>
+                                <div class="mt-2">
+                                    @if (k.Status == ProjectStatus.Actief)
+                                    {
+                                        <span class="badge status">Actief</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge status">Recent afgerond</span>
+                                        <span class="small">Beëindigd @ProjectRegels.Geleden(p.Einddatum!.Value, Model.Vandaag)</span>
+                                    }
+                                </div>
+                            </article>
+                        }
+                    </div>
+                }
+            </section>
+        }
+    </div>
+
+    <section class="col-lg-4" aria-labelledby="h-uren">
+        <div class="card">
+            <div class="card-body">
+                <h2 id="h-uren" class="h6">Geklokte uren</h2>
+                <form method="get" class="row g-2 mb-3">
+                    <input type="hidden" name="medewerkerId" value="@(Model.AlleMedewerkers.Count > 0 ? m.Id : null)" />
+                    <div class="col-6">
+                        <label for="periode" class="form-label small mb-0">Periode</label>
+                        <select id="periode" name="periode" class="form-select form-select-sm" onchange="this.form.submit()">
+                            @foreach (var (w, l) in DashboardModel.Periodes) { <option value="@w" selected="@(w == Model.Periode)">@l</option> }
+                        </select>
+                    </div>
+                    <div class="col-6">
+                        <label for="weergave" class="form-label small mb-0">Weergave</label>
+                        <select id="weergave" name="weergave" class="form-select form-select-sm" onchange="this.form.submit()">
+                            @foreach (var (w, l) in DashboardModel.Weergaven) { <option value="@w" selected="@(w == Model.Weergave)">@l</option> }
+                        </select>
+                    </div>
+                    <noscript><div class="col-12"><button class="btn btn-sm btn-outline-secondary">Toon</button></div></noscript>
+                </form>
+
+                @if (Model.Weergave == "totaal" || Model.TotaalMinuten == 0)
+                {
+                    <div class="text-center py-3">
+                        <div class="display-6 fw-semibold">@Uren(Model.TotaalMinuten)</div>
+                        <div class="small text-muted">@Model.PeriodeLabel@(Model.TotaalMinuten == 0 ? " · nog geen ingediende uren" : "")</div>
+                    </div>
+                }
+                else
+                {
+                    var start = 0.0;
+                    <svg viewBox="0 0 100 100" class="taart" role="img" aria-label="Geklokte uren @Model.PeriodeLabel: @string.Join(", ", Model.Schijven.Select(s => $"{s.Label} {Uren(s.Minuten)} ({Procent(s.Minuten)})"))">
+                        @if (Model.Schijven.Count == 1)
+                        {
+                            <circle cx="50" cy="50" r="48" fill="@Model.Schijven[0].Kleur"><title>@Model.Schijven[0].Label: @Uren(Model.Schijven[0].Minuten) (100%)</title></circle>
+                        }
+                        else
+                        {
+                            foreach (var s in Model.Schijven)
+                            {
+                                var einde = start + (double)s.Minuten / Model.TotaalMinuten;
+                                <path d="@DashboardModel.Pad(start, einde)" fill="@s.Kleur" stroke="#fff" stroke-width=".8"><title>@s.Label: @Uren(s.Minuten) (@Procent(s.Minuten))</title></path>
+                                start = einde;
+                            }
+                        }
+                        <circle cx="50" cy="50" r="27" fill="#fff" />
+                        <text x="50" y="49" text-anchor="middle" class="taart-totaal">@Uren(Model.TotaalMinuten)</text>
+                        <text x="50" y="58" text-anchor="middle" class="taart-sub">@Model.PeriodeLabel</text>
+                    </svg>
+                    <ul class="list-unstyled small mt-3 mb-0">
+                        @foreach (var s in Model.Schijven)
+                        {
+                            <li class="d-flex align-items-center gap-2 mb-1">
+                                <span class="kleurstaal" style="background:@s.Kleur"></span>
+                                <span class="me-auto">@s.Label</span>
+                                <span class="text-nowrap">@Uren(s.Minuten) · @Procent(s.Minuten)</span>
+                            </li>
+                        }
+                    </ul>
+                }
+            </div>
+        </div>
+    </section>
+</div>
+
+<section class="mt-5" aria-labelledby="h-prognose">
+    <h2 id="h-prognose" class="h5">Beschikbaarheid komende 12 maanden</h2>
+    <p class="small text-muted">Gepland tegen 38 u per week. Elk project neemt een vast deel van de week volgens zijn lengte; verlof telt niet mee.</p>
+
+    @if (Model.Verlopen.Count > 0)
+    {
+        <div class="alert alert-warning small" role="alert">
+            Einddatum verstreken maar nog gepland, dus de last loopt door. Pas de einddatum aan:
+            <ul class="mb-0">
+                @foreach (var p in Model.Verlopen)
+                {
+                    <li>
+                        @if (User.IsPlanner()) { <a asp-page="/Projecten/Detail" asp-route-id="@p.Id">@p.Naam</a> } else { @p.Naam }
+                        (einde @p.Einddatum?.ToString("d MMM yyyy"))
+                    </li>
+                }
+            </ul>
+        </div>
+    }
+
+    <ol class="maanden list-unstyled" aria-label="Vrije capaciteit per maand">
+        @foreach (var mnd in Model.Maanden)
+        {
+            var vrij = Math.Clamp(mnd.VrijAandeel, 0, 1) * 100;
+            <li class="maand @(mnd.Overboekt ? "overboekt" : "")">
+                <div class="maand-balk" aria-hidden="true"><div class="maand-vulling" style="height:@vrij.ToString("0", System.Globalization.CultureInfo.InvariantCulture)%"></div></div>
+                <div class="maand-naam">@mnd.Begin.ToString("MMM yy")</div>
+                @if (mnd.Overboekt)
+                {
+                    <div class="small fw-semibold">Overboekt</div>
+                    <div class="small text-muted">+@((-mnd.Vrij).ToString("0")) u</div>
+                }
+                else
+                {
+                    <div class="small fw-semibold">@((mnd.VrijAandeel * 100).ToString("0"))% vrij</div>
+                    <div class="small text-muted">@mnd.Vrij.ToString("0") u</div>
+                }
+            </li>
+        }
+    </ol>
+
+    <h3 class="h6 mt-4">Ruimte voor een nieuw project</h3>
+    <table class="table table-sm w-auto">
+        <thead><tr><th scope="col">Lengte</th><th scope="col" class="text-end">Deel van de week</th><th scope="col">Beschikbaar vanaf</th></tr></thead>
+        <tbody>
+            @foreach (var c in DashboardModel.Categorieen)
+            {
+                var i = Model.BeschikbaarVanaf[c.Nr - 1];
+                <tr>
+                    <td><span class="kleurstaal" style="background:@c.Kleur"></span>@c.Label</td>
+                    <td class="text-end">@Model.Aandelen[c.Nr - 1]%</td>
+                    <td>@(i switch { null => "niet binnen 12 maanden", 0 => "nu", _ => Model.Maanden[i.Value].Begin.ToString("MMMM yyyy") })</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</section>

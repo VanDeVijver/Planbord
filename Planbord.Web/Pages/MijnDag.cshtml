@@ -1,0 +1,201 @@
+@page
+@model MijnDagModel
+@{
+    ViewData["Title"] = "Mijn dag";
+    var d = Model.Dag;
+    string Status(RegelStatus s) => s switch { RegelStatus.GEWERKT => "Gewerkt", RegelStatus.NIET_GEWEEST => "Niet geweest", _ => "Geannuleerd" };
+    var statusLabel = Model.Rapport?.Status switch
+    {
+        null => "Niet ingevuld",
+        RapportStatus.Concept => Model.Rapport.VrijgegevenVoorCorrectie ? "Vrijgegeven voor correctie" : "Concept",
+        RapportStatus.Ingediend => "Ingediend",
+        _ => "Gesloten",
+    };
+}
+<div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+    <h1 class="h3 mb-0 me-2">@(Model.EigenStation || Model.Medewerker is null ? "Mijn dag" : Model.Medewerker.Naam)</h1>
+    <div class="btn-group btn-group-sm" role="group" aria-label="Dag">
+        <a class="btn btn-outline-secondary" asp-route-datum="@d.AddDays(-1).ToString("yyyy-MM-dd")" asp-route-medewerkerId="@(Model.EigenStation ? null : Model.Medewerker?.Id)" aria-label="Vorige dag">&larr;</a>
+        <span class="btn btn-outline-secondary disabled">@d.ToString("dddd d MMMM")</span>
+        <a class="btn btn-outline-secondary" asp-route-datum="@d.AddDays(1).ToString("yyyy-MM-dd")" asp-route-medewerkerId="@(Model.EigenStation ? null : Model.Medewerker?.Id)" aria-label="Volgende dag">&rarr;</a>
+    </div>
+    @if (Model.AlleMedewerkers.Count > 0)
+    {
+        <form method="get" class="d-flex gap-1 ms-md-auto">
+            <input type="hidden" name="datum" value="@d.ToString("yyyy-MM-dd")" />
+            <label for="kiesMw" class="visually-hidden">Station van medewerker</label>
+            <select id="kiesMw" name="medewerkerId" class="form-select form-select-sm" onchange="this.form.submit()">
+                <option value="">Station kiezen…</option>
+                @foreach (var m in Model.AlleMedewerkers) { <option value="@m.Id" selected="@(m.Id == Model.Medewerker?.Id)">@m.Naam</option> }
+            </select>
+            <noscript><button class="btn btn-sm btn-outline-secondary">Open</button></noscript>
+        </form>
+    }
+</div>
+
+<div id="vernieuwd" class="alert alert-warning d-none" role="status">
+    Er is iets gewijzigd (bericht of rapport). <a href="" class="alert-link">Vernieuw de pagina</a>.
+</div>
+
+@if (Model.Medewerker is null)
+{
+    <p>Je account is nog niet gekoppeld aan een medewerker. Vraag de zaakvoerder om dit in te stellen.</p>
+    return;
+}
+
+<div class="row g-4">
+    <div class="col-lg-5">
+        <section aria-labelledby="h-bericht" class="mb-4">
+            <h2 id="h-bericht" class="h5">Bericht van de planner</h2>
+            <div class="border rounded p-3 bg-light">
+                <pre class="bericht mb-0">@BerichtTekst.Samenvatting(d, Model.Projecten)</pre>
+                @if (!string.IsNullOrWhiteSpace(Model.ExtraTekst))
+                {
+                    <hr />
+                    <p class="bericht mb-0">@Model.ExtraTekst</p>
+                }
+            </div>
+        </section>
+
+        <section aria-labelledby="h-taken" class="mb-4">
+            <h2 id="h-taken" class="h5">Werftaken</h2>
+            @foreach (var p in Model.Projecten)
+            {
+                <h3 class="h6 mt-3">@p.Naam</h3>
+                @if (p.Taken.Count == 0) { <p class="small text-muted">Geen taken.</p> }
+                <ul class="list-unstyled">
+                    @foreach (var t in p.Taken.OrderBy(t => t.Klaar).ThenBy(t => t.Id))
+                    {
+                        <li class="d-flex align-items-center gap-2 mb-1">
+                            <form method="post" asp-page-handler="Taak">
+                                <input type="hidden" name="Datum" value="@d.ToString("yyyy-MM-dd")" />
+                                <input type="hidden" name="MedewerkerId" value="@Model.Medewerker.Id" />
+                                <input type="hidden" name="taakId" value="@t.Id" />
+                                <button class="btn btn-sm @(t.Klaar ? "btn-success" : "btn-outline-secondary")" aria-label="@(t.Klaar ? "Markeer als open" : "Markeer als klaar"): @t.Omschrijving">@(t.Klaar ? "✓" : "○")</button>
+                            </form>
+                            <span class="@(t.Klaar ? "text-decoration-line-through text-muted" : "")">@t.Omschrijving</span>
+                        </li>
+                    }
+                </ul>
+            }
+        </section>
+
+        <section aria-labelledby="h-week">
+            <h2 id="h-week" class="h5">Deze week</h2>
+            <ul class="list-unstyled small">
+                @foreach (var g in Model.Week.GroupBy(p => p.Datum))
+                {
+                    <li><a asp-route-datum="@g.Key.ToString("yyyy-MM-dd")" asp-route-medewerkerId="@(Model.EigenStation ? null : Model.Medewerker.Id)">@g.Key.ToString("ddd d/MM")</a>: @string.Join(", ", g.Select(p => p.Project.Naam))</li>
+                }
+                @if (Model.Week.Count == 0) { <li class="text-muted">Niets gepland.</li> }
+            </ul>
+        </section>
+    </div>
+
+    <section class="col-lg-7" aria-labelledby="h-rapport">
+        <div class="d-flex align-items-center gap-2 mb-2">
+            <h2 id="h-rapport" class="h5 mb-0">Dagrapport</h2>
+            <span class="badge text-bg-secondary">@statusLabel</span>
+        </div>
+
+        @if (Model.Fouten.Count > 0)
+        {
+            <div class="alert alert-danger" role="alert"><ul class="mb-0">@foreach (var f in Model.Fouten) { <li>@f</li> }</ul></div>
+        }
+
+        @if (Model.Projecten.Count == 0)
+        {
+            <p class="text-muted">Geen planning voor deze dag, dus geen rapport nodig.</p>
+        }
+        else if (!Model.Bewerkbaar)
+        {
+            var r = Model.Rapport!;
+            <p>@r.Start?.ToString("HH:mm") – @r.Einde?.ToString("HH:mm"), pauze @r.PauzeMinuten min.</p>
+            <ul class="list-group mb-2">
+                @foreach (var regel in r.Regels)
+                {
+                    <li class="list-group-item">
+                        <strong>@Model.Projecten.FirstOrDefault(p => p.Id == regel.ProjectId)?.Naam</strong> · @(regel.Status is { } s ? Status(s) : "—") · @Duur.Formatteer(regel.Minuten)
+                        <div class="small">@regel.Omschrijving</div>
+                    </li>
+                }
+            </ul>
+            <p class="small text-muted">Het rapport is vergrendeld. Vraag de planner om het vrij te geven als er iets moet aangepast worden.</p>
+        }
+        else
+        {
+            <form method="post" id="rapport">
+                <input type="hidden" name="Datum" value="@d.ToString("yyyy-MM-dd")" />
+                <input type="hidden" name="MedewerkerId" value="@Model.Medewerker.Id" />
+                <div class="row g-2 mb-3">
+                    <div class="col-4">
+                        <label asp-for="Form.Start" class="form-label">Begin</label>
+                        <input asp-for="Form.Start" type="time" class="form-control" />
+                    </div>
+                    <div class="col-4">
+                        <label asp-for="Form.Einde" class="form-label">Einde</label>
+                        <input asp-for="Form.Einde" type="time" class="form-control" />
+                    </div>
+                    <div class="col-4">
+                        <label asp-for="Form.PauzeMinuten" class="form-label">Pauze (min)</label>
+                        <input asp-for="Form.PauzeMinuten" type="number" min="0" max="600" class="form-control" />
+                    </div>
+                </div>
+                @for (var i = 0; i < Model.Form.Regels.Count; i++)
+                {
+                    var p = Model.Projecten.First(x => x.Id == Model.Form.Regels[i].ProjectId);
+                    <fieldset class="border rounded p-3 mb-3">
+                        <legend class="fs-6 fw-semibold float-none w-auto px-1 mb-0">@p.Naam</legend>
+                        <input type="hidden" asp-for="Form.Regels[i].ProjectId" />
+                        <div class="mb-2" role="radiogroup" aria-label="Status voor @p.Naam">
+                            @foreach (var s in Enum.GetValues<RegelStatus>())
+                            {
+                                <div class="form-check form-check-inline">
+                                    <input class="form-check-input" type="radio" name="Form.Regels[@i].Status" id="s@(i)@s" value="@s" checked="@(Model.Form.Regels[i].Status == s)" data-status />
+                                    <label class="form-check-label" for="s@(i)@s">@Status(s)</label>
+                                </div>
+                            }
+                        </div>
+                        <label class="form-label small" for="o@(i)">Uitgevoerd werk of reden</label>
+                        <textarea class="form-control mb-2" id="o@(i)" name="Form.Regels[@i].Omschrijving" rows="2" maxlength="2000">@Model.Form.Regels[i].Omschrijving</textarea>
+                        @if (Model.Form.Regels.Count > 1)
+                        {
+                            <label class="form-label small" for="u@(i)">Uren op deze werf (u:mm)</label>
+                            <input class="form-control" style="max-width: 8rem" id="u@(i)" name="Form.Regels[@i].Duur" value="@Model.Form.Regels[i].Duur" placeholder="0:00" inputmode="numeric" pattern="\d{1,2}(:[0-5]\d)?|\d{1,2}[.,]\d{1,2}" data-duur />
+                        }
+                    </fieldset>
+                }
+                <p class="small" id="netto" aria-live="polite"></p>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-primary" asp-page-handler="Bewaar">Concept bewaren</button>
+                    <button class="btn btn-primary" asp-page-handler="Indienen" onclick="return confirm('Rapport indienen? Daarna is het vergrendeld.')">Indienen</button>
+                </div>
+            </form>
+        }
+    </section>
+</div>
+
+@section Scripts {
+<script>
+    const mid = @Model.Medewerker.Id, dag = '@d.ToString("yyyy-MM-dd")';
+    luisterNaarSignalen(s => { if (s.medewerkerId === mid && s.datum === dag) document.getElementById('vernieuwd').classList.remove('d-none'); });
+
+    // Live hint: net working time and how much is still unallocated.
+    const f = document.getElementById('rapport'), netto = document.getElementById('netto');
+    const min = t => { // "7:30" or "7,5" -> minutes, like the server's Duur.Parse
+        t = (t || '').trim().replace(',', '.');
+        if (!t) return null;
+        if (t.includes(':')) { const [u, m] = t.split(':').map(Number); return u * 60 + m; }
+        return Math.round(parseFloat(t) * 60);
+    };
+    const fmt = m => `${m < 0 ? '-' : ''}${Math.floor(Math.abs(m) / 60)}:${String(Math.abs(m) % 60).padStart(2, '0')}`;
+    function herbereken() {
+        const s = min(f['Form.Start'].value), e = min(f['Form.Einde'].value), p = Number(f['Form.PauzeMinuten'].value) || 0;
+        if (s === null || e === null || e <= s) { netto.textContent = ''; return; }
+        const n = e - s - p, velden = [...f.querySelectorAll('[data-duur]')];
+        const verdeeld = velden.reduce((t, v) => t + (min(v.value) || 0), 0);
+        netto.textContent = `Netto werktijd: ${fmt(n)}` + (velden.length ? ` · nog te verdelen: ${fmt(n - verdeeld)}` : '');
+    }
+    if (f) { f.addEventListener('input', herbereken); herbereken(); }
+</script>
+}

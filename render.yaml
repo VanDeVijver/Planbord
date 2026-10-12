@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: planbord
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    healthCheckPath: /healthz
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      # Neon connection string in Npgsql keyword format, set in the Render dashboard.
+      - key: ConnectionStrings__DefaultConnection
+        sync: false
+      - key: Admin__Email
+        sync: false
+      - key: Admin__Password
+        sync: false

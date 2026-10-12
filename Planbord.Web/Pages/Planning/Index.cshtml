@@ -1,0 +1,94 @@
+﻿@page
+@model Planbord.Web.Pages.Planning.IndexModel
+@{
+    ViewData["Title"] = "Planning";
+    var vandaag = Huidig.Vandaag;
+}
+@Html.AntiForgeryToken()
+<div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+    <h1 class="h3 mb-0 me-3">Week van @Model.Maandag.ToString("d MMMM yyyy")</h1>
+    <div class="btn-group btn-group-sm" role="group" aria-label="Week">
+        <a class="btn btn-outline-secondary" asp-route-week="@Model.Maandag.AddDays(-7).ToString("yyyy-MM-dd")" asp-route-weergave="@Model.Weergave" aria-label="Vorige week">&larr;</a>
+        <a class="btn btn-outline-secondary" asp-route-weergave="@Model.Weergave">Deze week</a>
+        <a class="btn btn-outline-secondary" asp-route-week="@Model.Maandag.AddDays(7).ToString("yyyy-MM-dd")" asp-route-weergave="@Model.Weergave" aria-label="Volgende week">&rarr;</a>
+    </div>
+    <div class="btn-group btn-group-sm" role="group" aria-label="Weergave">
+        <a class="btn @(Model.PerProject ? "btn-outline-primary" : "btn-primary")" asp-route-week="@Model.Maandag.ToString("yyyy-MM-dd")" asp-route-weergave="medewerker" asp-route-dag="@Model.Dag">Per medewerker</a>
+        <a class="btn @(Model.PerProject ? "btn-primary" : "btn-outline-primary")" asp-route-week="@Model.Maandag.ToString("yyyy-MM-dd")" asp-route-weergave="project" asp-route-dag="@Model.Dag">Per werf</a>
+    </div>
+    <a class="btn btn-sm btn-outline-secondary ms-auto" asp-page-handler="Csv" asp-route-week="@Model.Maandag.ToString("yyyy-MM-dd")">CSV</a>
+</div>
+
+<nav class="mb-2" aria-label="Dag kiezen">
+    <ul class="nav nav-pills nav-fill small">
+        <li class="nav-item"><a class="nav-link @(Model.Dag is null ? "active" : "")" asp-route-week="@Model.Maandag.ToString("yyyy-MM-dd")" asp-route-weergave="@Model.Weergave">Week</a></li>
+        @for (var i = 0; i < 7; i++)
+        {
+            var d = Model.Maandag.AddDays(i);
+            <li class="nav-item"><a class="nav-link @(Model.Dag == i ? "active" : "")" asp-route-week="@Model.Maandag.ToString("yyyy-MM-dd")" asp-route-weergave="@Model.Weergave" asp-route-dag="@i">@d.ToString("ddd d")</a></li>
+        }
+    </ul>
+</nav>
+
+<div class="table-responsive">
+    <table class="table table-bordered table-sm bord @(Model.Dag is null ? "" : "w-100")" style="@(Model.Dag is null ? "" : "min-width:0")">
+        <thead>
+            <tr>
+                <th scope="col">@(Model.PerProject ? "Werf" : "Medewerker")</th>
+                @foreach (var d in Model.Dagen)
+                {
+                    <th scope="col" class="@(d == vandaag ? "vandaag" : "")">@d.ToString("ddd d/MM")</th>
+                }
+            </tr>
+        </thead>
+        <tbody>
+            @if (Model.PerProject)
+            {
+                foreach (var p in Model.Projecten)
+                {
+                    <tr>
+                        <th scope="row"><a asp-page="/Projecten/Detail" asp-route-id="@p.Id">@p.Naam</a></th>
+                        @foreach (var d in Model.Dagen)
+                        {
+                            <td data-project="@p.Id" data-datum="@d.ToString("yyyy-MM-dd")" class="@(d == vandaag ? "vandaag" : "")">
+                                @foreach (var r in Model.Rijen.Where(r => r.ProjectId == p.Id && r.Datum == d))
+                                {
+                                    <partial name="_Chip" model="(r, r.Medewerker.Naam)" />
+                                }
+                                <a class="small text-decoration-none" asp-page="Cel" asp-route-projectId="@p.Id" asp-route-datum="@d.ToString("yyyy-MM-dd")" aria-label="Medewerker toevoegen aan @p.Naam op @d.ToString("d/MM")">+</a>
+                            </td>
+                        }
+                    </tr>
+                }
+            }
+            else
+            {
+                foreach (var m in Model.Medewerkers)
+                {
+                    <tr>
+                        <th scope="row">@m.Naam</th>
+                        @foreach (var d in Model.Dagen)
+                        {
+                            var afwezig = Model.IsAfwezig(m.Id, d);
+                            <td data-medewerker="@(afwezig ? null : m.Id)" data-datum="@(afwezig ? null : d.ToString("yyyy-MM-dd"))" class="@(afwezig ? "afwezig" : d == vandaag ? "vandaag" : "")">
+                                @if (afwezig)
+                                {
+                                    <span class="small text-muted">Afwezig</span>
+                                }
+                                else
+                                {
+                                    @foreach (var r in Model.Rijen.Where(r => r.MedewerkerId == m.Id && r.Datum == d))
+                                    {
+                                        <partial name="_Chip" model="(r, r.Project.Naam)" />
+                                    }
+                                    <a class="small text-decoration-none" asp-page="Cel" asp-route-medewerkerId="@m.Id" asp-route-datum="@d.ToString("yyyy-MM-dd")" aria-label="Werf toevoegen voor @m.Naam op @d.ToString("d/MM")">+</a>
+                                }
+                            </td>
+                        }
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+<p class="small text-muted">Sleep een toewijzing naar een andere cel om ze te verplaatsen, of tik op een cel om ze te bewerken. Stippellijn = goedgekeurde interventie, rood = conflict.</p>

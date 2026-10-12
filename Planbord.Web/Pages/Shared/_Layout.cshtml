@@ -1,0 +1,78 @@
+@using Planbord.Core
+@using Planbord.Web
+@{
+    var ingelogd = User.Identity?.IsAuthenticated == true;
+    var planner = User.IsPlanner();
+}
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Planbord</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+</head>
+<body class="d-flex flex-column min-vh-100">
+    <a class="visually-hidden-focusable p-2" href="#inhoud">Naar inhoud</a>
+    <header class="d-print-none">
+        <nav class="navbar navbar-expand-xl navbar-light bg-white border-bottom mb-3" aria-label="Hoofdmenu">
+            <div class="container">
+                <a class="navbar-brand fw-semibold" asp-page="/Index">Planbord</a>
+                @if (ingelogd)
+                {
+                    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#menu" aria-controls="menu" aria-expanded="false" aria-label="Menu openen">
+                        <span class="navbar-toggler-icon"></span>
+                    </button>
+                    <div class="collapse navbar-collapse" id="menu">
+                        <ul class="navbar-nav me-auto">
+                            @if (planner)
+                            {
+                                <li class="nav-item"><a class="nav-link" asp-page="/Planning/Index">Planning</a></li>
+                                <li class="nav-item"><a class="nav-link" asp-page="/Planning/Plannen">Plannen</a></li>
+                                <li class="nav-item"><a class="nav-link" asp-page="/Projecten/Index">Projecten</a></li>
+                                <li class="nav-item"><a class="nav-link" asp-page="/Medewerkers/Index">Medewerkers</a></li>
+                                <li class="nav-item"><a class="nav-link" asp-page="/Medewerkers/Afwezigheden">Afwezigheden</a></li>
+                                <li class="nav-item"><a class="nav-link" asp-page="/Berichten/Index">Berichten</a></li>
+                                <li class="nav-item"><a class="nav-link" asp-page="/Dagrapporten/Index">Dagrapporten</a></li>
+                                <li class="nav-item"><a class="nav-link" asp-page="/Overzichten/Index">Overzichten</a></li>
+                                <li class="nav-item"><a class="nav-link" asp-page="/Overzichten/Prognose">Prognose</a></li>
+                            }
+                            @if (User.IsInRole(Rollen.Eigenaar))
+                            {
+                                <li class="nav-item"><a class="nav-link" asp-page="/Gebruikers/Index">Gebruikers</a></li>
+                            }
+                            <li class="nav-item"><a class="nav-link" asp-page="/MijnDag">Mijn dag</a></li>
+                            <li class="nav-item"><a class="nav-link" asp-page="/Dashboard">Dashboard</a></li>
+                        </ul>
+                        <form method="post" asp-page="/Account/Logout" class="d-flex align-items-center gap-2">
+                            <span class="small text-muted">@User.Identity!.Name</span>
+                            <button class="btn btn-sm btn-outline-secondary">Afmelden</button>
+                        </form>
+                    </div>
+                }
+            </div>
+        </nav>
+    </header>
+    <div class="container flex-grow-1">
+        <main id="inhoud" class="pb-3">
+            @if (TempData["Melding"] is string melding)
+            {
+                <div class="alert alert-info" role="status">@melding</div>
+            }
+            @if (TempData["Fout"] is string fout)
+            {
+                <div class="alert alert-danger" role="alert">@fout</div>
+            }
+            @RenderBody()
+        </main>
+    </div>
+    <footer class="border-top py-2 text-muted small d-print-none">
+        <div class="container text-center">Planbord · Vermeulen BT · <a asp-page="/Privacy">Privacy</a></div>
+    </footer>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

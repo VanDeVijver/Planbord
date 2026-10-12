@@ -1,0 +1,25 @@
+@page
+@model Planbord.Web.Pages.Account.ActiverenModel
+@{
+    ViewData["Title"] = "Account activeren";
+}
+<div class="mx-auto mt-4" style="max-width: 24rem">
+    <h1 class="h3 mb-3">Account activeren</h1>
+    <form method="post">
+        <input type="hidden" asp-for="Gebruiker" />
+        <input type="hidden" asp-for="Token" />
+        <div asp-validation-summary="ModelOnly" class="text-danger" role="alert"></div>
+        <div class="mb-3">
+            <label asp-for="Form.Wachtwoord" class="form-label"></label>
+            <input asp-for="Form.Wachtwoord" class="form-control" autocomplete="new-password" />
+            <span asp-validation-for="Form.Wachtwoord" class="text-danger small"></span>
+        </div>
+        <div class="mb-3">
+            <label asp-for="Form.Herhaal" class="form-label"></label>
+            <input asp-for="Form.Herhaal" class="form-control" autocomplete="new-password" />
+            <span asp-validation-for="Form.Herhaal" class="text-danger small"></span>
+        </div>
+        <button class="btn btn-primary w-100">Wachtwoord instellen</button>
+    </form>
+</div>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }
