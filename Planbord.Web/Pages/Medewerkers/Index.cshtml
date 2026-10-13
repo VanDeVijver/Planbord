@@ -13,7 +13,7 @@
                     @foreach (var m in Model.Medewerkers)
                     {
                         <tr class="@(m.Actief ? "" : "text-muted")">
-                            <td>@m.Naam@if (!m.Actief) { <span class="small"> (inactief)</span> }</td>
+                            <td>@m.Naam@if (!m.Actief) { <span class="small"> (inactief)</span> }@if (m.IsProjectleider) { <span class="badge text-bg-secondary ms-1">Projectleider</span> }</td>
                             <td>@m.Telefoon</td>
                             <td class="small">@(Model.Accounts.GetValueOrDefault(m.Id) ?? "—")</td>
                             <td class="text-end text-nowrap">
@@ -28,6 +28,9 @@
                                         <button class="btn btn-sm btn-primary">Opslaan</button>
                                     </form>
                                 </details>
+                                <form method="post" asp-page-handler="Projectleider" asp-route-id="@m.Id" class="d-inline">
+                                    <button class="btn btn-sm btn-outline-secondary">@(m.IsProjectleider ? "Geen projectleider" : "Projectleider")</button>
+                                </form>
                                 <form method="post" asp-page-handler="Actief" asp-route-id="@m.Id" class="d-inline">
                                     <button class="btn btn-sm btn-outline-secondary">@(m.Actief ? "Inactief maken" : "Activeren")</button>
                                 </form>

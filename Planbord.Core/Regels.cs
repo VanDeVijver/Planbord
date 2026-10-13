@@ -58,6 +58,20 @@ public static class ProjectRegels
     }
 }
 
+public static class Tijdlijn
+{
+    /// Left offset and width as fractions (0–1) of the window [van, tot) for a bar from start to einde
+    /// (both inclusive), clipped to the window. No start date = from the left edge, no end date = to the
+    /// right edge. Null when the bar falls outside the window.
+    public static (double Links, double Breedte)? Positie(DateOnly van, DateOnly tot, DateOnly? start, DateOnly? einde)
+    {
+        double totaal = tot.DayNumber - van.DayNumber;
+        var s = Math.Max((start ?? van).DayNumber, van.DayNumber);
+        var e = Math.Min(einde is { } x ? x.DayNumber + 1 : tot.DayNumber, tot.DayNumber);
+        return e <= s ? null : ((s - van.DayNumber) / totaal, (e - s) / totaal);
+    }
+}
+
 public class RapportInvoer
 {
     public TimeOnly? Start { get; set; }

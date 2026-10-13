@@ -134,6 +134,24 @@ fieldset.border { border-color: var(--line) !important; border-radius: var(--rad
 .maand.overboekt .maand-balk { background: #F7D3DA; }
 .maand-naam { font-size: .8rem; color: var(--muted); margin-top: .3rem; }
 
+/* Yearly calendar: one row per project leader, bars positioned in % of the 12-month window */
+.kalender-scroll { overflow-x: auto; }
+.kalender { min-width: 820px; }
+.kal-rij { display: grid; grid-template-columns: 160px 1fr; align-items: center; border-top: 1px solid var(--line); }
+.kal-as { border-top: 0; }
+.kal-naam { padding: .5rem .75rem .5rem 0; font-weight: 600; font-size: .9rem; }
+.kal-track { position: relative; height: 3rem; }
+.kal-as .kal-track { height: 1.5rem; }
+.kal-maand { position: absolute; bottom: .1rem; font-size: .75rem; color: var(--muted); transform: translateX(-50%); white-space: nowrap; }
+.kal-lijn { position: absolute; top: 0; bottom: 0; border-left: 1px solid var(--line); }
+.kal-balk {
+    position: absolute; top: .55rem; height: 1.9rem; display: flex; align-items: center; padding: 0 .5rem;
+    border-radius: var(--radius-sm); border: 1px solid rgba(0, 0, 0, .08); color: var(--ink); font-size: .8rem;
+    text-decoration: none; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.kal-balk:hover, .kal-balk:focus-visible { color: var(--ink); filter: brightness(.95); }
+.kal-vandaag { position: absolute; top: 0; bottom: 0; border-left: 2px solid rgba(220, 53, 69, .45); pointer-events: none; }
+
 /* Skeleton loader */
 .skelet { background: linear-gradient(90deg, #eee 25%, #f7f7f7 37%, #eee 63%); background-size: 400% 100%; animation: skelet 1.4s ease infinite; border-radius: var(--radius-sm); height: 1.2rem; margin: .5rem 0; }
 @keyframes skelet { 0% { background-position: 100% 50%; } 100% { background-position: 0 50%; } }

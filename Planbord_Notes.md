@@ -1,6 +1,6 @@
 # Planbord – Notes
 
-Last updated: 2026-10-10
+Last updated: 2026-10-13
 
 ## Employee dashboard
 
@@ -142,3 +142,76 @@ Each project takes a standard percentage of the 38-hour week, set by its length 
 4. "Available from" per category and the fit check for a new project.
 5. Ranking of all employees for a new project.
 6. Later: expertise fields on employees and projects, as a filter before the ranking.
+
+## Yearly calendar (project leader timeline)
+
+A separate page, called **Yearly calendar**, that shows the projects per project leader on one 12-month timeline, so the planner can see at a glance who is free when.
+
+### Why
+
+- The planner gets a call from a new client who wants a project drawn up, with its timing and costs.
+- Instead of going through every employee and all their projects, she looks at one screen: every project leader with their projects on a timeline, and sees immediately when each leader is free.
+- The company usually has 1 project running per project leader. There are currently five project leaders, but this is not a fixed number.
+
+### Access and place in the app
+
+- Its own page in the menu, named "Yearly calendar". The employee dashboard and the availability forecast stay as they are.
+- Only planners and owners can open it (the existing "Planner" policy: Eigenaar and Planner).
+
+### Layout
+
+- X-axis: time.
+- Y-axis: one row per project leader, with the leader's name at the start of the row.
+- Each project is a horizontal bar on its leader's row, running from its start date to its end date. A leader's projects follow each other on the same row, next to each other in time.
+- The bar shows the project name. The start and end date are not written on the bar, since they can be read from the x-axis.
+- Bar colour: the pastel colour of the project's length category, the same colours as the employee dashboard legend (see "Length categories" and "Colour rules" above).
+- A project without an end date runs to the right edge of the visible timeline.
+- Today is marked by a vertical red line with lowered opacity.
+
+### Timeline period
+
+- The timeline always covers 12 months.
+- Default view: from 3 months before today to 9 months after today.
+- Two arrow buttons move the whole window one year back or one year forward (for example from -3/+9 months to -15/-3 months).
+
+### Project data used
+
+- Only: project name, project leader, start date and end date.
+- Status is not shown. Only projects the company is sure will happen are placed on this calendar.
+- Absences are not shown. Project length is the only thing this screen is about; a person makes the decisions based on it.
+- Archived projects are shown when they fall inside the visible 12 months.
+- Every project always has a project leader (required field).
+- Overlap between projects of the same leader is assumed not to happen; no check for it is needed.
+
+### When is a leader free
+
+- A project leader is free from the day after the end date of their previous project.
+- This is read from the screen by the planner (the gap between bars). No free/busy calculation or indicator in code is needed.
+
+### Interaction
+
+- Clicking a project bar opens the project details (the existing project detail page).
+- Dragging is not part of the first version (see "Nice to haves for the future").
+
+### Project leader role (to build first)
+
+- The app has no project leader role yet. A project leader is an **employee** (`Medewerker`) marked as project leader, for example with a flag on `Medewerker`, not a separate user account role.
+- Only active employees marked as project leader get a row on the calendar.
+- The list of project leaders is not fixed: marking or unmarking an employee as project leader adds or removes their row.
+- A project needs a required link to its project leader. The `Project` entity has no such field yet, so this needs a new field and a migration.
+- Add test data: project leaders with projects spread across the timeline (before, around and after today), so the page can be demonstrated.
+
+### Suggested build order
+
+1. Project leader flag on `Medewerker` and required project leader on `Project`, with migration.
+2. Test data: project leaders and their projects.
+3. The Yearly calendar page with rows, bars in category colours and the today line.
+4. Year back/forward arrow buttons.
+5. Clicking a bar opens the project details.
+
+## Nice to haves for the future
+
+- **Cost calculation** for a new project (for example when a client calls for a quote). Separate from the yearly calendar for now.
+- **Dragging on the yearly calendar**:
+  - Drag a new project onto a project leader's row to create it there (then fill in name and dates).
+  - Drag an existing project to other dates or to another project leader.

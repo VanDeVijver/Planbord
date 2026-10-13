@@ -1,0 +1,66 @@
+@page
+@model Planbord.Web.Pages.Overzichten.JaarkalenderModel
+@using P = Planbord.Web.Pages.Overzichten.JaarkalenderModel
+@{
+    ViewData["Title"] = "Jaarkalender";
+}
+<div class="d-flex flex-wrap align-items-center gap-2 mb-1">
+    <h1 class="h3 mb-0 me-2">Jaarkalender</h1>
+    <div class="btn-group btn-group-sm" role="group" aria-label="Periode">
+        <a class="btn btn-outline-secondary" asp-route-jaar="@(Model.Jaar - 1)" aria-label="Een jaar terug">&larr;</a>
+        <a class="btn btn-outline-secondary @(Model.Jaar == 0 ? "disabled" : "")" asp-route-jaar="0">Vandaag</a>
+        <a class="btn btn-outline-secondary" asp-route-jaar="@(Model.Jaar + 1)" aria-label="Een jaar vooruit">&rarr;</a>
+    </div>
+    <span class="small text-muted ms-2">@Model.Van.ToString("d MMMM yyyy") – @Model.Tot.AddDays(-1).ToString("d MMMM yyyy")</span>
+</div>
+<ul class="list-inline small mb-3" aria-label="Legende projectduur">
+    @foreach (var c in DashboardModel.Categorieen)
+    {
+        <li class="list-inline-item me-3"><span class="kleurstaal" style="background:@c.Kleur"></span>@c.Label</li>
+    }
+</ul>
+
+@if (Model.Rijen.Count == 0)
+{
+    <p>Er zijn nog geen projectleiders. Markeer medewerkers als projectleider bij <a asp-page="/Medewerkers/Index">Medewerkers</a>.</p>
+    return;
+}
+
+<div class="kalender-scroll">
+    <div class="kalender">
+        <div class="kal-rij kal-as" aria-hidden="true">
+            <div class="kal-naam"></div>
+            <div class="kal-track">
+                @foreach (var (begin, links) in Model.Maanden)
+                {
+                    <span class="kal-maand" style="left:@P.Procent(links)">@begin.ToString("MMM yy")</span>
+                }
+            </div>
+        </div>
+        @foreach (var (leider, balken) in Model.Rijen)
+        {
+            <section class="kal-rij" aria-label="@leider.Naam">
+                <h2 class="kal-naam h6 mb-0">@leider.Naam</h2>
+                <div class="kal-track">
+                    @foreach (var (begin, links) in Model.Maanden)
+                    {
+                        <span class="kal-lijn" style="left:@P.Procent(links)" aria-hidden="true"></span>
+                    }
+                    @foreach (var b in balken)
+                    {
+                        var p = b.Project;
+                        var periode = $"{p.Startdatum?.ToString("d MMM yyyy") ?? "start onbekend"} – {p.Einddatum?.ToString("d MMM yyyy") ?? "geen einddatum"}";
+                        <a class="kal-balk" asp-page="/Projecten/Detail" asp-route-id="@p.Id"
+                           style="left:@P.Procent(b.Links);width:@P.Procent(b.Breedte);background:@b.Kleur"
+                           title="@p.Naam · @periode" aria-label="@p.Naam, @periode">@p.Naam</a>
+                    }
+                    @if (Model.Vandaag is { } v)
+                    {
+                        <span class="kal-vandaag" style="left:@P.Procent(v)" aria-hidden="true"></span>
+                    }
+                </div>
+            </section>
+        }
+    </div>
+</div>
+<p class="small text-muted mt-2">Een projectleider is vrij vanaf de dag na het einde van zijn vorige project. Klik op een project om het te openen.</p>

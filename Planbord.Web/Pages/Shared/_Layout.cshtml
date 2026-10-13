@@ -16,7 +16,7 @@
 <body class="d-flex flex-column min-vh-100">
     <a class="visually-hidden-focusable p-2" href="#inhoud">Naar inhoud</a>
     <header class="d-print-none">
-        <nav class="navbar navbar-expand-xl navbar-light bg-white border-bottom mb-3" aria-label="Hoofdmenu">
+        <nav class="navbar navbar-expand-xxl navbar-light bg-white border-bottom mb-3" aria-label="Hoofdmenu">
             <div class="container">
                 <a class="navbar-brand fw-semibold" asp-page="/Index">Planbord</a>
                 @if (ingelogd)
@@ -37,6 +37,7 @@
                                 <li class="nav-item"><a class="nav-link" asp-page="/Dagrapporten/Index">Dagrapporten</a></li>
                                 <li class="nav-item"><a class="nav-link" asp-page="/Overzichten/Index">Overzichten</a></li>
                                 <li class="nav-item"><a class="nav-link" asp-page="/Overzichten/Prognose">Prognose</a></li>
+                                <li class="nav-item"><a class="nav-link" asp-page="/Overzichten/Jaarkalender">Jaarkalender</a></li>
                             }
                             @if (User.IsInRole(Rollen.Eigenaar))
                             {

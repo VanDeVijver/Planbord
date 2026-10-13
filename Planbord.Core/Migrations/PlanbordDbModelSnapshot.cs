@@ -431,6 +431,9 @@ namespace Planbord.Core.Migrations
                     b.Property<bool>("Actief")
                         .HasColumnType("boolean");
 
+                    b.Property<bool>("IsProjectleider")
+                        .HasColumnType("boolean");
+
                     b.Property<string>("Naam")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -505,10 +508,15 @@ namespace Planbord.Core.Migrations
                         .HasMaxLength(150)
                         .HasColumnType("character varying(150)");
 
+                    b.Property<int>("ProjectleiderId")
+                        .HasColumnType("integer");
+
                     b.Property<DateOnly?>("Startdatum")
                         .HasColumnType("date");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ProjectleiderId");
 
                     b.ToTable("Projecten");
                 });
@@ -676,6 +684,17 @@ namespace Planbord.Core.Migrations
                     b.Navigation("Medewerker");
 
                     b.Navigation("Project");
+                });
+
+            modelBuilder.Entity("Planbord.Core.Project", b =>
+                {
+                    b.HasOne("Planbord.Core.Medewerker", "Projectleider")
+                        .WithMany()
+                        .HasForeignKey("ProjectleiderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Projectleider");
                 });
 
             modelBuilder.Entity("Planbord.Core.ProjectTaak", b =>

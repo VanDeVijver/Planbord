@@ -23,6 +23,8 @@ public class Medewerker
     [Required, MaxLength(100)] public string Naam { get; set; } = "";
     [MaxLength(30)] public string? Telefoon { get; set; }
     public bool Actief { get; set; } = true;
+    /// Active project leaders get a row on the yearly calendar.
+    public bool IsProjectleider { get; set; }
 }
 
 public class Project
@@ -34,6 +36,9 @@ public class Project
     /// Planned period; drives the dashboard's length category and active/finished status.
     public DateOnly? Startdatum { get; set; }
     public DateOnly? Einddatum { get; set; }
+    /// Required: every project has a project leader.
+    public int ProjectleiderId { get; set; }
+    public Medewerker Projectleider { get; set; } = null!;
     public List<ProjectTaak> Taken { get; set; } = [];
 }
 

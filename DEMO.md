@@ -60,5 +60,13 @@ One employee at a time; use the dropdown at the top right.
 
 Try 1 month and then 12 months to show the ranking change. The **Deel van de week** card on the right lets planners adjust the share per category.
 
+## 8b. Jaarkalender (branch `jaarkalender` only, +30 s)
+"A client calls for a new project: which project leader is free when?"
+- One row per **project leader** (Jan, Sofie, Tom, Lotte and Kevin), with their projects as bars on a 12-month timeline, from 3 months back to 9 months ahead. Bar colours match the dashboard's length categories.
+- The faded **red line** is today. A gap between bars means that leader is free; for example, Sofie is free right now until mid-November.
+- **← / →** move the window a year back or forward, and **Vandaag** jumps back.
+- Click a bar to open the project.
+- Project leaders are marked on **Medewerkers** (Projectleider button). Every project now has a required project leader on its form.
+
 ## 9. Gebruikers (2:50–3:00), owner only
 Invite users with a role and link them to an employee. The owner gets an **activation link** to send on, because email isn't configured. An employee's identity always comes from that link on the server, never from the browser. This is also where the sample-data reset lives.

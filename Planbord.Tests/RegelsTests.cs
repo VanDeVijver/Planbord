@@ -72,6 +72,17 @@ public class RegelsTests
     public void ProjectStatusOpDatum(string start, string? einde, ProjectStatus? verwacht) =>
         Assert.Equal(verwacht, ProjectRegels.Status(DateOnly.Parse(start), einde is null ? null : DateOnly.Parse(einde), new DateOnly(2026, 10, 12)));
 
+    [Fact]
+    public void TijdlijnPositie_KniptAfOpHetVensterEnZonderEindeTotDeRand()
+    {
+        DateOnly van = new(2026, 1, 1), tot = new(2026, 1, 11); // 10-day window
+        Assert.Equal((0.2, 0.3), Tijdlijn.Positie(van, tot, new(2026, 1, 3), new(2026, 1, 5)));   // 3 days incl.
+        Assert.Equal((0.0, 0.5), Tijdlijn.Positie(van, tot, new(2025, 12, 1), new(2026, 1, 5)));  // starts before
+        Assert.Equal((0.8, 0.2), Tijdlijn.Positie(van, tot, new(2026, 1, 9), null));              // no end date
+        Assert.Null(Tijdlijn.Positie(van, tot, new(2026, 2, 1), new(2026, 3, 1)));                // after window
+        Assert.Null(Tijdlijn.Positie(van, tot, new(2025, 1, 1), new(2025, 12, 31)));              // before window
+    }
+
     [Theory]
     [InlineData("7:30", 450)]
     [InlineData("7,5", 450)]

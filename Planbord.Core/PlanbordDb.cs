@@ -24,6 +24,7 @@ public class PlanbordDb(DbContextOptions<PlanbordDb> options) : IdentityDbContex
         b.Entity<AppUser>().HasIndex(u => u.MedewerkerId).IsUnique();
         b.Entity<Planning>().HasIndex(p => new { p.Datum, p.MedewerkerId });
         b.Entity<Planning>().HasOne(p => p.Project).WithMany().OnDelete(DeleteBehavior.Restrict);
+        b.Entity<Project>().HasOne(p => p.Projectleider).WithMany().OnDelete(DeleteBehavior.Restrict);
         b.Entity<Bericht>().HasIndex(m => new { m.MedewerkerId, m.Datum }).IsUnique();
         b.Entity<Dagrapport>().HasIndex(r => new { r.MedewerkerId, r.Datum }).IsUnique();
         b.Entity<Dagrapport>().Property(r => r.Status).HasConversion<string>().HasMaxLength(20);

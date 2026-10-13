@@ -1,0 +1,16 @@
+@model (List<Planbord.Core.Medewerker> Leiders, int? Gekozen)
+<div class="mb-2">
+    <label for="projectleider" class="form-label">Projectleider</label>
+    @if (Model.Leiders.Count == 0)
+    {
+        <p class="small text-danger mb-0">Er is nog geen projectleider. Markeer eerst een medewerker als projectleider bij <a asp-page="/Medewerkers/Index">Medewerkers</a>.</p>
+    }
+    else
+    {
+        <select id="projectleider" name="Form.ProjectleiderId" class="form-select" required>
+            <option value="">Kies…</option>
+            @foreach (var m in Model.Leiders) { <option value="@m.Id" selected="@(m.Id == Model.Gekozen)">@m.Naam</option> }
+        </select>
+    }
+    @Html.ValidationMessage("Form.ProjectleiderId", new { @class = "text-danger small" })
+</div>

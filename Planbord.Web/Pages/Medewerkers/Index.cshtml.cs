@@ -37,6 +37,13 @@ public class IndexModel(PlanbordDb db) : PageModel
         return RedirectToPage();
     }
 
+    /// Marking or unmarking adds or removes the employee's row on the yearly calendar.
+    public async Task<IActionResult> OnPostProjectleiderAsync(int id)
+    {
+        if (await db.Medewerkers.FindAsync(id) is { } m) { m.IsProjectleider = !m.IsProjectleider; await db.SaveChangesAsync(); }
+        return RedirectToPage();
+    }
+
     /// Employees are never deleted so historical records stay meaningful.
     public async Task<IActionResult> OnPostActiefAsync(int id)
     {

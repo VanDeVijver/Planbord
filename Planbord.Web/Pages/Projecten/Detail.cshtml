@@ -18,6 +18,7 @@
                 <label asp-for="Form.Adres" class="form-label"></label>
                 <input asp-for="Form.Adres" class="form-control" />
             </div>
+            <partial name="_LeiderVeld" model="(Model.Leiders, Model.Form.ProjectleiderId)" />
             <div class="row g-2 mb-3">
                 <div class="col"><label asp-for="Form.Startdatum" class="form-label"></label><input asp-for="Form.Startdatum" class="form-control" /></div>
                 <div class="col"><label asp-for="Form.Einddatum" class="form-label"></label><input asp-for="Form.Einddatum" class="form-control" /></div>

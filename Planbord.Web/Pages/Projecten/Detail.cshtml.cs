@@ -12,12 +12,14 @@ public class DetailModel(PlanbordDb db) : PageModel
     [BindProperty] public ProjectInvoer Form { get; set; } = new();
     [BindProperty, MaxLength(300)] public string? NieuweTaak { get; set; }
     public Project Project { get; private set; } = null!;
+    public List<Medewerker> Leiders { get; private set; } = [];
 
     async Task<bool> Laad()
     {
         var p = await db.Projecten.Include(p => p.Taken.OrderBy(t => t.Klaar).ThenBy(t => t.Id)).FirstOrDefaultAsync(p => p.Id == Id);
         if (p is null) return false;
         Project = p;
+        Leiders = await ProjectInvoer.Leiders(db, p.ProjectleiderId);
         return true;
     }
 
@@ -31,6 +33,7 @@ public class DetailModel(PlanbordDb db) : PageModel
     public async Task<IActionResult> OnPostAsync()
     {
         if (!await Laad()) return NotFound();
+        await Form.Controleer(db, ModelState, Project.ProjectleiderId);
         if (!ModelState.IsValid) return Page();
         Form.ZetOp(Project);
         await db.SaveChangesAsync();

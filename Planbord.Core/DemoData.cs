@@ -14,8 +14,47 @@ public static class DemoData
         "Materiaal klaargezet en opgeruimd", "Storing opgespoord en hersteld",
     ];
 
-    /// Destructive: wipes all planning data (not user accounts) and seeds projects with crews,
-    /// holidays, a planned current week and closed reports for every workday since 1 January 2025.
+    /// One project leader's projects, back to back: (name, address, length in days, gap in days before the next).
+    record Keten(int Leider, int StartOffset, (string Naam, string Adres, int Dagen, int Pauze)[] Projecten);
+
+    // Five project leaders, each with one project at a time (yearly calendar), spread from early 2025 to 2028.
+    static readonly Keten[] Ketens =
+    [
+        new(0, -650, [
+            ("Renovatie Stadhuis", "Stadhuisplein 1, Lier", 240, 14),
+            ("Keuken Restaurant Ter Dijk", "Dijkstraat 2, Mechelen", 150, 10),
+            ("Ziekenhuis Campus Noord", "Noordring 100, Antwerpen", 400, 30),
+            ("Appartementen Noord", "Noorderlaan 77, Antwerpen", 300, 0)]),
+        new(1, -600, [
+            ("Winkelcentrum Ring", "Ringlaan 50, Mechelen", 330, 20),
+            ("Kantoor Zuidpark", "Zuidpark 1, Gent", 120, 15),
+            ("Dakwerken Vrijthof", "Vrijthof 5, Mechelen", 95, 65),
+            ("Sanitair Rusthuis Ter Linden", "Lindestraat 20, Lier", 120, 10),
+            ("Loods Haven", "Havenweg 2, Antwerpen", 270, 0)]),
+        new(2, -560, [
+            ("Herstelling Brouwerij", "Brouwerijstraat 6, Lier", 25, 10),
+            ("Uitbreiding Fabriek Noord", "Fabriekstraat 3, Antwerpen", 420, 14),
+            ("Zonnepanelen Industriepark", "Industriepark 14, Duffel", 300, 20),
+            ("Brandmelding Bibliotheek", "Bibliotheekplein 2, Mechelen", 150, 0)]),
+        new(3, -500, [
+            ("Verbouwing Bakkerij Smets", "Bruul 18, Mechelen", 60, 20),
+            ("Schoolcampus West", "Westlaan 40, Mechelen", 330, 10),
+            ("Laadpalen Gemeentehuis", "Grote Markt 1, Duffel", 65, 5),
+            ("Onderhoud School Ter Beke", "Bekestraat 30, Duffel", 22, 7),
+            ("Verlichting Parking Oost", "Oostweg 3, Mechelen", 70, 30),
+            ("Nieuwbouw De Linde", "Lindelaan 4, Lier", 420, 0)]),
+        new(4, -480, [
+            ("Renovatie Turnzaal", "Sportlaan 11, Duffel", 110, 30),
+            ("Noodherstelling Hangar 3", "Luchthavenlaan 3, Duffel", 15, 10),
+            ("Bekabeling Kinderdagverblijf", "Speelpleinstraat 8, Lier", 70, 20),
+            ("Keuring Sporthal De Nete", "Netelaan 9, Lier", 20, 180),
+            ("Herstelling Stationsplein", "Stationsplein 1, Mechelen", 21, 39),
+            ("Spoedklus Sint-Romboutscollege", "Sint-Romboutskerkhof 4, Mechelen", 24, 13),
+            ("Kantoortoren Mechelen-Noord", "Nekkerspoel 2, Mechelen", 540, 0)]),
+    ];
+
+    /// Destructive: wipes all planning data (not user accounts) and seeds project leaders with their
+    /// projects, crews, holidays, a planned current week and closed reports for every workday since 2025.
     public static async Task Reset(PlanbordDb db, DateOnly vandaag)
     {
         await using var tx = await db.Database.BeginTransactionAsync();
@@ -29,67 +68,29 @@ public static class DemoData
         await db.Users.ExecuteUpdateAsync(u => u.SetProperty(x => x.MedewerkerId, (int?)null));
         await db.Medewerkers.ExecuteDeleteAsync();
 
-        // 0 Jan, 1 Sofie, 2 Tom, 3 Lotte, 4 Kevin, 5 Ines
+        // 0 Jan, 1 Sofie, 2 Tom, 3 Lotte, 4 Kevin (project leaders), 5 Ines
         var mensen = new[] { "Jan Peeters", "Sofie Janssens", "Tom Maes", "Lotte Claes", "Kevin Wouters", "Ines Goossens" }
-            .Select(n => new Medewerker { Naam = n }).ToList();
-        int[] iedereen = [0, 1, 2, 3, 4, 5];
+            .Select((n, i) => new Medewerker { Naam = n, IsProjectleider = i < 5 }).ToList();
 
-        var v = vandaag;
+        // Crew = the leader plus two colleagues, so everyone works on two or three chains.
         var ploegen = new Dictionary<Project, int[]>();
-        Project P(string naam, string adres, DateOnly? start, DateOnly? einde, int[] ploeg)
+        var werven = new List<Project>();
+        foreach (var k in Ketens)
         {
-            var p = new Project { Naam = naam, Adres = adres, Startdatum = start, Einddatum = einde };
-            ploegen[p] = ploeg;
-            return p;
+            var start = vandaag.AddDays(k.StartOffset);
+            foreach (var (naam, adres, dagen, pauze) in k.Projecten)
+            {
+                var p = new Project { Naam = naam, Adres = adres, Startdatum = start, Einddatum = start.AddDays(dagen - 1), Projectleider = mensen[k.Leider] };
+                ploegen[p] = [k.Leider, (k.Leider + 2) % 6, (k.Leider + 4) % 6];
+                werven.Add(p);
+                start = start.AddDays(dagen + pauze);
+            }
         }
-
-        // Crews are chosen so every employee has at least two active or recently finished projects per
-        // length category, while the planned load differs: Ines has the most room, Lotte is overbooked.
-        var terBeke = P("Onderhoud School Ter Beke", "Bekestraat 30, Duffel", v.AddDays(-10), v.AddDays(12), [0, 3]);
-        var kerkstraat = P("Renovatie Kerkstraat", "Kerkstraat 12, Mechelen", v.AddMonths(-2), v.AddMonths(1), [0, 1]);
-        kerkstraat.Taken = [new() { Omschrijving = "Stelling afbreken" }, new() { Omschrijving = "Kabelgoten plaatsen" }];
-        var linde = P("Nieuwbouw De Linde", "Lindelaan 4, Lier", v.AddMonths(-4), v.AddMonths(10), [3, 4, 5]);
-        linde.Taken = [new() { Omschrijving = "Verdeelbord aansluiten" }];
-        var stationsplein = P("Herstelling Stationsplein", "Stationsplein 1, Mechelen", v.AddDays(-25), v.AddDays(-5), [1, 2, 4, 5]);
-        var werven = new List<Project>
-        {
-            // <= 1 month
-            terBeke,
-            P("Spoedklus Sint-Romboutscollege", "Sint-Romboutskerkhof 4, Mechelen", v.AddDays(-5), v.AddDays(18), [3]),
-            stationsplein,
-            P("Keuring Sporthal De Nete", "Netelaan 9, Lier", v.AddDays(-40), v.AddDays(-20), [0, 1, 2, 5]),
-            P("Noodherstelling Hangar 3", "Luchthavenlaan 3, Duffel", v.AddDays(-60), v.AddDays(-45), [0, 3, 4]),
-            // <= 3 months
-            kerkstraat,
-            P("Verlichting Parking Oost", "Oostweg 3, Mechelen", v.AddDays(-50), v.AddDays(20), [2, 4]),
-            P("Laadpalen Gemeentehuis", "Grote Markt 1, Duffel", v.AddDays(-80), v.AddDays(-15), iedereen),
-            P("Bekabeling Kinderdagverblijf", "Speelpleinstraat 8, Lier", v.AddDays(-100), v.AddDays(-30), [3, 5]),
-            // <= 6 months
-            P("Sanitair Rusthuis Ter Linden", "Lindestraat 20, Lier", v.AddMonths(-2), v.AddMonths(2), [1, 3]),
-            P("Brandmelding Bibliotheek", "Bibliotheekplein 2, Mechelen", v.AddMonths(-4), v.AddMonths(1), [2, 5]),
-            P("Dakwerken Vrijthof", "Vrijthof 5, Mechelen", v.AddMonths(-5), v.AddDays(-21), iedereen),
-            P("Renovatie Turnzaal", "Sportlaan 11, Duffel", v.AddDays(-150), v.AddDays(-40), [0, 4]),
-            // <= 12 months
-            P("Loods Haven", "Havenweg 2, Antwerpen", v.AddMonths(-3), v.AddMonths(6), [0, 3, 4]),
-            P("Zonnepanelen Industriepark", "Industriepark 14, Duffel", v.AddMonths(-8), v.AddMonths(2), [1, 2, 5]),
-            P("Schoolcampus West", "Westlaan 40, Mechelen", v.AddMonths(-11), v.AddMonths(-1), iedereen),
-            // 1 year+
-            linde,
-            P("Ziekenhuis Campus Noord", "Noordring 100, Antwerpen", v.AddMonths(-15), v.AddMonths(6), [0, 1, 2, 3]),
-            P("Uitbreiding Fabriek Noord", "Fabriekstraat 3, Antwerpen", v.AddMonths(-16), v.AddMonths(-2), [1, 2, 4, 5]),
-            // Finished long ago: only in the hours (last year / all time)
-            P("Kantoor Zuidpark", "Zuidpark 1, Gent", v.AddMonths(-9), v.AddMonths(-5), iedereen),
-            P("Winkelcentrum Ring", "Ringlaan 50, Mechelen", v.AddMonths(-21), v.AddMonths(-10), iedereen),
-            P("Renovatie Stadhuis", "Stadhuisplein 1, Lier", v.AddMonths(-22), v.AddMonths(-14), iedereen),
-            P("Verbouwing Bakkerij Smets", "Bruul 18, Mechelen", v.AddMonths(-14), v.AddMonths(-12), iedereen),
-            P("Herstelling Brouwerij", "Brouwerijstraat 6, Lier", v.AddMonths(-16), v.AddMonths(-16).AddDays(20), iedereen),
-            P("Keuken Restaurant Ter Dijk", "Dijkstraat 2, Mechelen", v.AddMonths(-19), v.AddMonths(-14), iedereen),
-        };
-        var werkplaats = new Project { Naam = "Werkplaats", Adres = "Industrieweg 8, Mechelen", Startdatum = v.AddYears(-2) };
-        var toekomst = new Project { Naam = "Appartementen Noord", Adres = "Noorderlaan 77, Antwerpen", Startdatum = v.AddMonths(1), Einddatum = v.AddMonths(13) };
+        Project Werf(string naam) => werven.Single(p => p.Naam == naam);
+        Werf("Onderhoud School Ter Beke").Taken = [new() { Omschrijving = "Stelling afbreken" }, new() { Omschrijving = "Kabelgoten plaatsen" }];
+        Werf("Nieuwbouw De Linde").Taken = [new() { Omschrijving = "Verdeelbord aansluiten" }];
         db.AddRange(mensen);
         db.AddRange(werven);
-        db.AddRange(werkplaats, toekomst);
         await db.SaveChangesAsync();
 
         // Holidays per employee: two summer weeks (staggered) and the Christmas week, also future ones for the forecast.
@@ -112,14 +113,14 @@ public static class DemoData
         var maandag = PlanningRegels.Maandag(vandaag);
         var t = DateTime.UtcNow;
         var rnd = new Random(42);
-        // Days worked per (employee, project): each day goes to the least-used running project of the
-        // employee's crews, so short jobs get picked too and every crew member is really assigned.
+        // Each day goes to the least-used running project of the employee's crews (or any running one).
         var gebruikt = new Dictionary<(int, Project), int>();
+        List<Project> Lopend(DateOnly d) => werven.Where(p => p.Startdatum <= d && p.Einddatum >= d).ToList();
         List<Project> Kandidaten(int i, DateOnly d)
         {
-            var lopend = werven.Where(p => p.Startdatum <= d && (p.Einddatum is null || p.Einddatum >= d)).ToList();
+            var lopend = Lopend(d);
             var eigen = lopend.Where(p => ploegen[p].Contains(i)).ToList();
-            return eigen.Count > 0 ? eigen : lopend.Count > 0 ? lopend : [werkplaats];
+            return eigen.Count > 0 ? eigen : lopend;
         }
         Project Kies(int i, List<Project> kandidaten, Project? niet = null)
         {
@@ -136,6 +137,7 @@ public static class DemoData
             {
                 if (verlof.Any(a => a.MedewerkerId == mensen[i].Id && a.Van <= d && a.Tot >= d)) continue;
                 var kandidaten = Kandidaten(i, d);
+                if (kandidaten.Count == 0) continue;
                 var hoofd = Kies(i, kandidaten);
                 db.Planningen.Add(new Planning { MedewerkerId = mensen[i].Id, ProjectId = hoofd.Id, Datum = d, ToegewezenOp = t });
                 var regels = new List<DagrapportRegel>();
@@ -160,15 +162,22 @@ public static class DemoData
         }
 
         // Current week: planned on the crews' running projects, no reports yet.
+        Project? janWoensdag = null;
         for (var d = maandag; d < maandag.AddDays(5); d = d.AddDays(1))
             for (var i = 0; i < mensen.Count; i++)
-                db.Planningen.Add(new Planning { MedewerkerId = mensen[i].Id, ProjectId = Kies(i, Kandidaten(i, d)).Id, Datum = d, ToegewezenOp = t });
-        // One unapproved intervention to show the conflict flow.
-        db.Planningen.Add(new Planning { MedewerkerId = mensen[0].Id, ProjectId = werkplaats.Id, Datum = maandag.AddDays(2), ToegewezenOp = t.AddMinutes(1), IsInterventie = true });
+            {
+                var p = Kies(i, Kandidaten(i, d));
+                if (i == 0 && d == maandag.AddDays(2)) janWoensdag = p;
+                db.Planningen.Add(new Planning { MedewerkerId = mensen[i].Id, ProjectId = p.Id, Datum = d, ToegewezenOp = t });
+            }
+        // One unapproved intervention to show the conflict flow: Jan helps on a second site on Wednesday.
+        var hulp = Lopend(maandag.AddDays(2)).First(p => p != janWoensdag);
+        db.Planningen.Add(new Planning { MedewerkerId = mensen[0].Id, ProjectId = hulp.Id, Datum = maandag.AddDays(2), ToegewezenOp = t.AddMinutes(1), IsInterventie = true });
         db.Afwezigheden.Add(new Afwezigheid { MedewerkerId = mensen[5].Id, Van = maandag.AddDays(7), Tot = maandag.AddDays(8), Reden = "Verlof" });
         // Past its end date but still planned next week: the forecast keeps its load and flags it.
-        db.Planningen.Add(new Planning { MedewerkerId = mensen[4].Id, ProjectId = stationsplein.Id, Datum = maandag.AddDays(8), ToegewezenOp = t });
+        db.Planningen.Add(new Planning { MedewerkerId = mensen[4].Id, ProjectId = Werf("Herstelling Stationsplein").Id, Datum = maandag.AddDays(8), ToegewezenOp = t });
         // Assigned but not started yet: counts in the forecast, not shown as a dashboard card.
+        var toekomst = Werf("Appartementen Noord");
         db.Planningen.Add(new Planning { MedewerkerId = mensen[0].Id, ProjectId = toekomst.Id, Datum = PlanningRegels.Maandag(toekomst.Startdatum!.Value).AddDays(7), ToegewezenOp = t });
 
         await db.SaveChangesAsync();

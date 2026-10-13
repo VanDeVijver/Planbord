@@ -11,13 +11,14 @@
     <div class="col-lg-8">
         <div class="table-responsive">
             <table class="table align-middle">
-                <thead><tr><th scope="col">Naam</th><th scope="col">Adres</th><th scope="col">Periode</th><th scope="col">Open taken</th><th scope="col"><span class="visually-hidden">Acties</span></th></tr></thead>
+                <thead><tr><th scope="col">Naam</th><th scope="col">Adres</th><th scope="col">Projectleider</th><th scope="col">Periode</th><th scope="col">Open taken</th><th scope="col"><span class="visually-hidden">Acties</span></th></tr></thead>
                 <tbody>
-                    @foreach (var (p, open) in Model.Projecten)
+                    @foreach (var (p, open, leider) in Model.Projecten)
                     {
                         <tr class="@(p.Gearchiveerd ? "text-muted" : "")">
                             <td><a asp-page="Detail" asp-route-id="@p.Id">@p.Naam</a>@if (p.Gearchiveerd) { <span class="small"> (gearchiveerd)</span> }</td>
                             <td>@p.Adres</td>
+                            <td class="small">@leider</td>
                             <td class="small text-nowrap">@(p.Startdatum?.ToString("dd/MM/yy") ?? "?") – @(p.Einddatum?.ToString("dd/MM/yy") ?? "geen einde")</td>
                             <td>@open</td>
                             <td class="text-end">
@@ -48,6 +49,7 @@
                 <label asp-for="Form.Adres" class="form-label"></label>
                 <input asp-for="Form.Adres" class="form-control" />
             </div>
+            <partial name="_LeiderVeld" model="(Model.Leiders, Model.Form.ProjectleiderId)" />
             <div class="row g-2 mb-3">
                 <div class="col"><label asp-for="Form.Startdatum" class="form-label"></label><input asp-for="Form.Startdatum" class="form-control" /></div>
                 <div class="col"><label asp-for="Form.Einddatum" class="form-label"></label><input asp-for="Form.Einddatum" class="form-control" /></div>
