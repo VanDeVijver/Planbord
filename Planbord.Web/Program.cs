@@ -80,6 +80,10 @@ await using (var scope = app.Services.CreateAsyncScope())
         if (!res.Succeeded) throw new InvalidOperationException("Admin aanmaken mislukt: " + string.Join("; ", res.Errors.Select(e => e.Description)));
         await users.AddToRoleAsync(admin, Rollen.Eigenaar);
     }
+
+    // A fresh local database gets the sample data, so the app is demo-ready without a manual reset.
+    if (app.Environment.IsDevelopment() && !await db.Medewerkers.AnyAsync())
+        await DemoData.Reset(db, Huidig.Vandaag);
 }
 
 app.UseForwardedHeaders();
