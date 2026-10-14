@@ -79,12 +79,4 @@ public class IndexModel(PlanbordDb db, UserManager<AppUser> users) : PageModel
         TempData["Melding"] = $"Nieuwe activatielink voor {u.Email}: {await Uitnodigingslink(u)}";
         return RedirectToPage();
     }
-
-    public async Task<IActionResult> OnPostResetAsync(string bevestiging)
-    {
-        if (bevestiging != "RESET") { TempData["Fout"] = "Typ RESET om te bevestigen."; return RedirectToPage(); }
-        await DemoData.Reset(db, Huidig.Vandaag);
-        TempData["Melding"] = "Voorbeeldgegevens hersteld. Koppelingen tussen accounts en medewerkers zijn gewist.";
-        return RedirectToPage();
-    }
 }

@@ -7,18 +7,18 @@ Workforce planning and daily work reports for Vermeulen BT. ASP.NET Core 8 (Razo
 | Branch | What it is |
 | --- | --- |
 | `main` | Planning, daily reports, dashboard and availability forecast, with sample data (many short projects in parallel). |
-| `jaarkalender` | **This branch.** `main` plus project leaders and the yearly calendar, with its own sample data (five project leaders, one project at a time). Proof of concept: it is not merged into `main`. |
-| `jaarkalender-zonder-testdata` | The same as `jaarkalender`, but without any sample data: you start with an empty app. |
+| `jaarkalender` | `main` plus project leaders and the yearly calendar, with its own sample data (five project leaders, one project at a time). Proof of concept: it is not merged into `main`. |
+| `jaarkalender-zonder-testdata` | **This branch.** The same as `jaarkalender`, but without any sample data: you start with an empty app and enter your own employees and projects. |
 
 The branches change the database schema differently, so each one uses **its own local database** (see below). They can run against the same Postgres container.
 
 | Project | Contents |
 | --- | --- |
 | `Planbord.Web` | Razor Pages, startup, realtime signals (SSE), CSV export. Startup project. |
-| `Planbord.Core` | Entities, `PlanbordDb`, migrations, business rules (`PlanbordService`, `Regels.cs`, `Prognose.cs`), sample data (`DemoData.cs`). |
+| `Planbord.Core` | Entities, `PlanbordDb`, migrations, business rules (`PlanbordService`, `Regels.cs`, `Prognose.cs`). |
 | `Planbord.Tests` | xUnit tests for the planning, report, forecast and timeline rules. |
 
-Roles: `EIGENAAR` (everything, including users and the sample-data reset), `PLANNER` (planning, projects, employees, absences, messages, report review, overviews, forecast, yearly calendar), `MEDEWERKER` (own station and dashboard only; identity comes from the account's linked employee, never from the request).
+Roles: `EIGENAAR` (everything, including user management), `PLANNER` (planning, projects, employees, absences, messages, report review, overviews, forecast, yearly calendar), `MEDEWERKER` (own station and dashboard only; identity comes from the account's linked employee, never from the request).
 
 ## Run this branch locally
 
@@ -29,7 +29,7 @@ Requires the .NET 8 SDK, Docker and Git.
    ```bash
    git clone https://github.com/VanDeVijver/Planbord.git
    cd Planbord
-   git switch jaarkalender
+   git switch jaarkalender-zonder-testdata
    ```
 
 2. Start the local Postgres container (from the repository root):
@@ -58,20 +58,27 @@ Requires the .NET 8 SDK, Docker and Git.
 
 5. Log in with the admin email and password from step 3.
 
-On this branch the launch profiles (`Planbord.Web/Properties/launchSettings.json`) point the app at the database **`planbord_jaarkalender`**. That overrides the connection string from your user secrets, so this branch never touches `main`'s `planbord` database. On the first start the app creates the database, applies the migrations and, because the database is empty, **loads the sample data automatically** (Development only).
+On this branch the launch profiles (`Planbord.Web/Properties/launchSettings.json`) point the app at the database **`planbord_leeg`**. That overrides the connection string from your user secrets, so this branch never touches the databases of the other branches. On the first start the app creates the database and applies the migrations. Apart from your admin account and the default forecast shares per project length, the database is **empty**.
 
 Run the tests with `dotnet test`.
+
+## First steps in an empty app
+
+Log in as the admin (owner), then:
+
+1. **Medewerkers**: add your employees. Use the **Projectleider** button to mark the ones who lead projects; only active project leaders get a row on the yearly calendar.
+2. **Projecten**: add projects. Each project needs a **project leader**, which is required. Fill in the **start and end date**; they set the project's place on the yearly calendar and its length category for the dashboard and forecast.
+3. **Gebruikers**: invite the people who need an account. Choose a role and, for employees, link the account to their employee record. No email is sent: you get an activation link to pass on, valid for one day (**Nieuwe link** makes a fresh one).
+4. **Afwezigheden**: enter holidays and other absences. They block planning and lower capacity in the forecast.
+5. **Planning** / **Plannen**: plan employees on projects per day. Drag a project (per-employee view) or an employee (per-site view) from the list on the right onto a day, or use **+** in a cell.
+
+From then on employees fill in their daily report in **Mijn dag**, and planners review them in **Dagrapporten**. **Overzichten**, **Dashboard**, **Prognose** and **Jaarkalender** fill up as data comes in.
 
 ### Using the yearly calendar
 
 - **Jaarkalender** (menu, planners and owners): one row per active project leader, with their projects as bars on a 12-month timeline (3 months back to 9 months ahead). The faded red line is today, and a gap between bars means that leader is free. **← / →** move the window by a year, and clicking a bar opens the project.
-- **Medewerkers**: the **Projectleider** button marks or unmarks an employee as project leader. Marked, active employees get a row on the calendar.
-- **Projecten**: every project needs a project leader (required field) and a start and end date for its place on the calendar.
 - Bars use the same per-project colour as the planning board. The colour comes from the project id, so nothing has to be set.
-
-### Sample data
-
-The sample data contains six employees (Jan, Sofie, Tom, Lotte and Kevin are project leaders) and their projects from 2025 to 2028. It also has holidays, a planned current week and closed reports at 38 hours a week since January 2025. To start over, log in as owner and use **Gebruikers → Voorbeeldgegevens herstellen** (type `RESET`). This wipes all planning data but keeps the user accounts; links between accounts and employees have to be set again. [DEMO.md](DEMO.md) is a 3-minute walkthrough based on this data.
+- A project without an end date runs to the right edge of the timeline.
 
 ## Migrations
 
@@ -82,25 +89,24 @@ dotnet ef migrations add <Name> --project Planbord.Core --startup-project Planbo
 ```
 
 ```bash
-dotnet ef database update --project Planbord.Core --startup-project Planbord.Web --connection "Host=localhost;Port=5432;Database=planbord_jaarkalender;Username=postgres;Password=planbord_dev"
+dotnet ef database update --project Planbord.Core --startup-project Planbord.Web --connection "Host=localhost;Port=5432;Database=planbord_leeg;Username=postgres;Password=planbord_dev"
 ```
 
 ## Deploy to Render
 
 1. Create a Neon project and copy its connection string. Neon shows a `postgresql://` URL; rewrite it into Npgsql format:
    `Host=<endpoint>.neon.tech;Database=<db>;Username=<user>;Password=CHANGE_ME;SSL Mode=Require`
-2. In Render, create a new **Blueprint** from this repository and choose the branch to deploy (`render.yaml`, Docker runtime, health check `/healthz`).
+2. In Render, create a new **Blueprint** from this repository and choose this branch (`render.yaml`, Docker runtime, health check `/healthz`).
 3. Set the environment variables in the Render dashboard:
    - `ConnectionStrings__DefaultConnection` = the Neon string above
    - `Admin__Email`
    - `Admin__Password`
 
-Production does not load sample data automatically and does not use the launch profiles. The app listens on Render's `PORT`, trusts the proxy's forwarded headers, and stores data-protection keys in the database so sign-ins survive redeploys.
+Production does not use the launch profiles. The app listens on Render's `PORT`, trusts the proxy's forwarded headers, and stores data-protection keys in the database so sign-ins survive redeploys.
 
 ## Notes
 
 - Calendar dates are PostgreSQL `date` (`DateOnly`) columns, so schedules never shift with time zones.
 - Dashboard, forecast and yearly calendar follow `Planbord_Notes.md`. A project's length category comes from its planned start and end date. The forecast (`Planbord.Core/Prognose.cs`) plans against a fixed 38-hour week. Each project takes a share of the week per category, stored in `CategorieAandelen` and editable on the Prognose page. Holidays come from the absences, and public holidays are ignored.
 - Realtime updates use Server-Sent Events (`/signalen`) held in memory: fine for one instance. Use Postgres `LISTEN/NOTIFY` if the app is ever scaled out.
-- No email is sent. Inviting a user gives the owner an activation link to pass on (valid for one day; **Nieuwe link** makes a fresh one).
 - Not included: push notifications, the project-leader hours board (separate Planbord PL app), cost calculation and dragging on the yearly calendar.
