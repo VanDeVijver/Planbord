@@ -13,12 +13,7 @@
     </div>
     <span class="small text-muted ms-2">@Model.Van.ToString("d MMMM yyyy") – @Model.Tot.AddDays(-1).ToString("d MMMM yyyy")</span>
 </div>
-<ul class="list-inline small mb-3" aria-label="Legende projectduur">
-    @foreach (var c in DashboardModel.Categorieen)
-    {
-        <li class="list-inline-item me-3"><span class="kleurstaal" style="background:@c.Kleur"></span>@c.Label</li>
-    }
-</ul>
+<p class="small text-muted mb-3">Elk project heeft dezelfde kleur als op de planning.</p>
 
 @if (Model.Rijen.Count == 0)
 {

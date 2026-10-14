@@ -41,8 +41,8 @@ public class JaarkalenderModel(PlanbordDb db) : PageModel
         Rijen = leiders.Select(l => (l, projecten.Where(p => p.ProjectleiderId == l.Id)
                 .Select(p => (p, pos: Tijdlijn.Positie(Van, Tot, p.Startdatum, p.Einddatum)))
                 .Where(x => x.pos is not null)
-                .Select(x => new Balk(x.p, x.pos!.Value.Links, x.pos.Value.Breedte,
-                    DashboardModel.Categorieen[ProjectRegels.Categorie(x.p.Startdatum, x.p.Einddatum) - 1].Kleur))
+                // Same per-project colour as on the planning board.
+                .Select(x => new Balk(x.p, x.pos!.Value.Links, x.pos.Value.Breedte, Planning.IndexModel.Kleur(x.p.Id)))
                 .ToList()))
             .ToList();
     }
