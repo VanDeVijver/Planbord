@@ -115,10 +115,16 @@ fieldset.border { border-color: var(--line) !important; border-radius: var(--rad
 .chip.interventie { border: 1px dashed var(--ink); }
 .chip.conflict { border: 2px solid var(--alarm); color: var(--alarm); font-weight: 600; }
 
-/* Drag list above the board */
-.palet { border: 1px solid var(--line); border-radius: var(--radius); padding: .75rem; margin-bottom: 1rem; }
-#palet { max-height: 7.5rem; overflow-y: auto; }
-.palet-item { padding: .2rem .65rem; border-radius: 999px; font-size: .85rem; cursor: grab; background: #ececec; border: 1px solid rgba(0, 0, 0, .08); user-select: none; }
+/* Board with the drag list in a column on the right; stacked under the board on narrow screens */
+.planbord-layout { display: grid; grid-template-columns: minmax(0, 1fr) 220px; gap: 1rem; align-items: start; }
+.palet { border: 1px solid var(--line); border-radius: var(--radius); padding: .75rem; position: sticky; top: 1rem; }
+#palet { max-height: calc(100vh - 12rem); overflow-y: auto; padding-right: .25rem; }
+@media (max-width: 991.98px) {
+    .planbord-layout { grid-template-columns: 1fr; }
+    .palet { position: static; }
+    #palet { max-height: 14rem; }
+}
+.palet-item { padding: .3rem .65rem; border-radius: var(--radius-sm); font-size: .85rem; cursor: grab; background: #ececec; border: 1px solid rgba(0, 0, 0, .08); user-select: none; }
 .palet-item:hover { filter: brightness(.95); }
 
 /* Employee dashboard: pastel category colours, always paired with a text label */
