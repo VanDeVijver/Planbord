@@ -109,8 +109,17 @@ fieldset.border { border-color: var(--line) !important; border-radius: var(--rad
 .bord td.drop { outline: 2px dashed var(--ink); outline-offset: -2px; }
 .chip { display: block; padding: .2rem .5rem; margin-bottom: .25rem; border-radius: var(--radius-sm); background: #ececec; font-size: .85rem; cursor: grab; text-decoration: none; color: var(--ink); }
 .chip:hover { background: #e0e0e0; color: var(--ink); }
-.chip.interventie { background: var(--paper); border: 1px dashed var(--ink); }
-.chip.conflict { background: var(--paper); border: 2px solid var(--alarm); color: var(--alarm); }
+/* Chips carry their project's pastel colour inline; status is shown with the border. */
+.chip { border: 1px solid rgba(0, 0, 0, .08); }
+.chip:hover { filter: brightness(.95); }
+.chip.interventie { border: 1px dashed var(--ink); }
+.chip.conflict { border: 2px solid var(--alarm); color: var(--alarm); font-weight: 600; }
+
+/* Drag list above the board */
+.palet { border: 1px solid var(--line); border-radius: var(--radius); padding: .75rem; margin-bottom: 1rem; }
+#palet { max-height: 7.5rem; overflow-y: auto; }
+.palet-item { padding: .2rem .65rem; border-radius: 999px; font-size: .85rem; cursor: grab; background: #ececec; border: 1px solid rgba(0, 0, 0, .08); user-select: none; }
+.palet-item:hover { filter: brightness(.95); }
 
 /* Employee dashboard: pastel category colours, always paired with a text label */
 .kleurstaal { display: inline-block; width: .9rem; height: .9rem; border-radius: .25rem; margin-right: .4rem; vertical-align: -.1rem; border: 1px solid rgba(0, 0, 0, .12); }

@@ -30,6 +30,32 @@
     </ul>
 </nav>
 
+<section class="palet d-print-none" aria-labelledby="palet-titel">
+    <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+        <h2 id="palet-titel" class="h6 mb-0">@(Model.PerProject ? "Medewerkers" : "Werven")</h2>
+        <span class="small text-muted">Sleep naar een dag om in te plannen</span>
+        <label for="palet-zoek" class="visually-hidden">Zoeken</label>
+        <input type="search" id="palet-zoek" class="form-control form-control-sm ms-auto" style="max-width: 14rem" placeholder="Zoeken" data-filter="palet" />
+    </div>
+    <div id="palet" class="d-flex flex-wrap gap-1">
+        @if (Model.PerProject)
+        {
+            foreach (var m in Model.Medewerkers)
+            {
+                <span class="palet-item" draggable="true" data-nieuw="medewerker:@m.Id">@m.Naam</span>
+            }
+        }
+        else
+        {
+            // Only sites still running in or after the shown week; finished ones would just be clutter.
+            foreach (var p in Model.Projecten.Where(p => !p.Gearchiveerd && (p.Einddatum is null || p.Einddatum >= Model.Maandag)))
+            {
+                <span class="palet-item" draggable="true" data-nieuw="project:@p.Id" style="background:@Planbord.Web.Pages.Planning.IndexModel.Kleur(p.Id)">@p.Naam</span>
+            }
+        }
+    </div>
+</section>
+
 <div class="table-responsive">
     <table class="table table-bordered table-sm bord @(Model.Dag is null ? "" : "w-100")" style="@(Model.Dag is null ? "" : "min-width:0")">
         <thead>
@@ -47,7 +73,7 @@
                 foreach (var p in Model.Projecten)
                 {
                     <tr>
-                        <th scope="row"><a asp-page="/Projecten/Detail" asp-route-id="@p.Id">@p.Naam</a></th>
+                        <th scope="row"><span class="kleurstaal" style="background:@Planbord.Web.Pages.Planning.IndexModel.Kleur(p.Id)"></span><a asp-page="/Projecten/Detail" asp-route-id="@p.Id">@p.Naam</a></th>
                         @foreach (var d in Model.Dagen)
                         {
                             <td data-project="@p.Id" data-datum="@d.ToString("yyyy-MM-dd")" class="@(d == vandaag ? "vandaag" : "")">

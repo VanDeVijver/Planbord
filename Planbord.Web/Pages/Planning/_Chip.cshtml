@@ -5,4 +5,5 @@
     var status = r.IsConflict ? " (conflict, niet goedgekeurd)" : r.IsInterventie ? " (interventie)" : "";
 }
 <a class="chip @klasse" draggable="true" data-id="@r.Id" data-medewerker="@r.MedewerkerId" data-project="@r.ProjectId"
+   style="background:@Planbord.Web.Pages.Planning.IndexModel.Kleur(r.ProjectId)"
    asp-page="/Planning/Cel" asp-route-medewerkerId="@r.MedewerkerId" asp-route-datum="@r.Datum.ToString("yyyy-MM-dd")">@Model.Label<span class="visually-hidden">@status</span></a>

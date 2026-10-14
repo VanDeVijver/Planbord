@@ -55,4 +55,15 @@ public class IndexModel(PlanbordDb db, PlanbordService svc) : PageModel
         if (await svc.Verplaats(id, medewerkerId, projectId, datum) is { } fout) TempData["Fout"] = fout;
         return new OkResult();
     }
+
+    /// Drop from the list above the board: same rules as adding through a cell (absence, archived, intervention).
+    public async Task<IActionResult> OnPostToevoegenAsync(int medewerkerId, int projectId, DateOnly datum)
+    {
+        if (await svc.Toewijzen(medewerkerId, projectId, datum) is { } fout) TempData["Fout"] = fout;
+        return new OkResult();
+    }
+
+    /// Fixed pastel colour per project: hues spread by the golden angle, so neighbouring ids differ clearly.
+    public static string Kleur(int projectId) =>
+        string.Create(System.Globalization.CultureInfo.InvariantCulture, $"hsl({projectId * 137.508 % 360:0}, 60%, 85%)");
 }

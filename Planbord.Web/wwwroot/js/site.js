@@ -17,11 +17,12 @@ document.addEventListener('click', async e => {
     knop.textContent = 'Gekopieerd';
 });
 
-// Planning board drag-and-drop (desktop). A cell supplies the new date and, depending on
-// the view, the new employee or project; the chip keeps the other one.
+// Planning board drag-and-drop (desktop). A cell supplies the date and, depending on the view,
+// the employee or the project. Dragging a chip moves it (the chip keeps the other one); dragging
+// an item from the list above the board adds a new assignment (the item supplies the other one).
 document.addEventListener('dragstart', e => {
-    const chip = e.target.closest('.chip[draggable]');
-    if (chip) e.dataTransfer.setData('text/plain', chip.dataset.id);
+    const bron = e.target.closest('.chip[draggable], .palet-item');
+    if (bron) e.dataTransfer.setData('text/plain', bron.dataset.id ? 'chip:' + bron.dataset.id : bron.dataset.nieuw);
 });
 document.addEventListener('dragover', e => {
     const cel = e.target.closest('td[data-datum]');
@@ -32,14 +33,34 @@ document.addEventListener('drop', async e => {
     const cel = e.target.closest('td[data-datum]');
     if (!cel) return;
     e.preventDefault();
-    const chip = document.querySelector(`.chip[data-id="${e.dataTransfer.getData('text/plain')}"]`);
-    if (!chip) return;
+    const [soort, id] = e.dataTransfer.getData('text/plain').split(':');
     const body = new FormData();
-    body.append('id', chip.dataset.id);
-    body.append('medewerkerId', cel.dataset.medewerker ?? chip.dataset.medewerker);
-    body.append('projectId', cel.dataset.project ?? chip.dataset.project);
+    let handler;
+    if (soort === 'chip') {
+        const chip = document.querySelector(`.chip[data-id="${id}"]`);
+        if (!chip) return;
+        handler = 'Verplaats';
+        body.append('id', id);
+        body.append('medewerkerId', cel.dataset.medewerker ?? chip.dataset.medewerker);
+        body.append('projectId', cel.dataset.project ?? chip.dataset.project);
+    } else {
+        const medewerker = cel.dataset.medewerker ?? (soort === 'medewerker' ? id : null);
+        const project = cel.dataset.project ?? (soort === 'project' ? id : null);
+        if (!medewerker || !project) return;
+        handler = 'Toevoegen';
+        body.append('medewerkerId', medewerker);
+        body.append('projectId', project);
+    }
     body.append('datum', cel.dataset.datum);
     body.append('__RequestVerificationToken', document.querySelector('input[name=__RequestVerificationToken]').value);
-    await fetch('?handler=Verplaats', { method: 'POST', body });
+    await fetch('?handler=' + handler, { method: 'POST', body });
     location.reload();
+});
+
+// Live filter for a list: <input data-filter="listId"> hides items whose text doesn't match.
+document.addEventListener('input', e => {
+    const lijst = e.target.dataset?.filter && document.getElementById(e.target.dataset.filter);
+    if (!lijst) return;
+    const q = e.target.value.trim().toLowerCase();
+    for (const item of lijst.children) item.hidden = q !== '' && !item.textContent.toLowerCase().includes(q);
 });
